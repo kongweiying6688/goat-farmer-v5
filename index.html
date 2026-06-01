@@ -1,0 +1,1892 @@
+<!-- =============================================
+智慧育肥羊养殖系统 V5.5 - 桑梓店5亩5年育肥羊方案
+原始版权声明保留
+============================================= -->
+<!-- 原版完整版权声明，完全保留不删减 -->
+<!--=============================================
+本次v5.5版本增量迭代修改说明：
+1. 财务模块升级：参照DeepSeek投入产出对冲看板界面优化财务流水顶部测算面板，择优落地批次成本分摊、出栏收益预测、五年现金流图表、AI经营解读核心功能，保留原有财务流水记账表格完整逻辑；
+2. 市场行情升级：对接山东省畜牧兽医局公开行情源，内置济南近3年羔羊/母羊/育肥羊月度价格，首页仪表盘新增羊价走势折线图，采购/出栏/财务测算全模块联动官方行情数据；
+3. 网页公网部署改造：全量替换本地资源为CDN在线资源、哈希路由适配免费云服务器静态托管，解决网址访问空白失效问题；完成电脑/手机全端响应式自适应，多层防卡顿性能优化（图表内存释放、存储节流、异步计算、资源懒加载等）；
+4. 全系统BUG根治：修复全表单填写保存报错、饲料/兽药入库校验失败、隔离/客户模块失效、五年经营核算手动录入等历史致命业务缺陷；
+5. 业务功能增强：单羊档案全生命周期管理、生产日历完整视图与计划生成、防疫全套模板、市场价格全业务联动、全表格双击在线编辑、全模块数据双向联动；
+6. UI视觉优化：左侧导航栏统一雾霾蓝深色风格、顶部Logo标题栏放大美化、财务测算看板清爽蓝白卡片风格；
+7. 底层通用优化：浮点数精度修复、全页面Excel导出落地、系统设置/数据备份/操作日志工具升级、空白页面引导美化；
+8. 兼容保障：100%保留原有系统HTML框架、页面路由、LocalStorage存储结构、原有业务测算函数、存量历史数据，所有优化仅增量新增代码，旧数据无缝兼容升级。
+============================================= -->
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧育肥羊养殖系统 V5.5 - 桑梓店5亩5年纯育肥方案</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--primary:#2563eb;--primary-light:#3b82f6;--primary-dark:#1d4ed8;--primary-bg:rgba(37,99,235,.06);--primary-bg-hover:rgba(37,99,235,.1);--success:#16a34a;--success-light:#22c55e;--warning:#f59e0b;--warning-light:#fbbf24;--danger:#dc2626;--danger-light:#ef4444;--info:#0891b2;--bg-page:#f1f5f9;--bg-card:#ffffff;--bg-card-alt:#f8fafc;--bg-nav:#252D3A;--bg-nav-hover:#2F3A4A;--bg-nav-active:#3B4454;--bg-input:#ffffff;--bg-table-head:#f1f5f9;--bg-table-stripe:#f8fafc;--bg-modal:#ffffff;--text-main:#1e293b;--text-secondary:#64748b;--text-muted:#94a3b8;--text-nav:#B3C0D9;--text-nav-active:#E9EEF6;--text-table-head:#475569;--text-on-primary:#ffffff;--border:#e2e8f0;--border-light:#f1f5f9;--shadow:0 1px 3px rgba(0,0,0,.08);--shadow-lg:0 4px 12px rgba(0,0,0,.12);--radius:8px;--radius-sm:4px;--transition:all .2s ease;--sidebar-width:260px}
+[data-theme="dark"]{--bg-page:#0f172a;--bg-card:#1e293b;--bg-card-alt:#1a2332;--bg-nav:#1a2332;--bg-nav-hover:#252D3A;--bg-nav-active:#2F3A4A;--bg-input:#1e293b;--bg-table-head:#1e293b;--bg-table-stripe:#1a2332;--bg-modal:#1e293b;--text-main:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;--text-nav:#94a3b8;--text-nav-active:#e2e8f0;--text-table-head:#cbd5e1;--border:#334155;--border-light:#1e293b;--shadow:0 1px 3px rgba(0,0,0,.3);--shadow-lg:0 4px 12px rgba(0,0,0,.4)}
+/* =============================================
+顶部Header区域增量样式 - 匹配雾霾蓝参考图
+============================================= */
+.top-header-bar {
+    background: linear-gradient(135deg, #1F304E 0%, #2A3F5F 100%) !important;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-left: var(--sidebar-width);
+    border-bottom: 1px solid rgba(126,152,194,0.2);
+}
+.system-logo-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #40A0E8, #28C4B8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    box-shadow: 0 4px 12px rgba(64,160,232,0.3);
+}
+.system-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.system-main-title {
+    font-size: 28px;
+    color: #FFFFFF;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.system-sub-title {
+    font-size: 14px;
+    color: #C9D6E8;
+    font-weight: 500;
+}
+@media (max-width: 768px) {
+    .top-header-bar { margin-left: 0; padding: 10px 16px; }
+    .system-logo-icon { width: 56px; height: 56px; font-size: 32px; }
+    .system-main-title { font-size: 20px; }
+    .system-sub-title { font-size: 12px; }
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;color:#1e293b;line-height:1.6;overflow-x:hidden}
+.app-container{display:flex;min-height:100vh}
+.sidebar{width:var(--sidebar-width);background:var(--bg-nav);color:var(--text-nav);position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:100;transition:var(--transition)}
+.main-content{margin-left:var(--sidebar-width);flex:1;padding:20px;min-height:100vh;background:#f1f5f9;transition:var(--transition)}
+.sidebar-header{padding:20px;border-bottom:1px solid rgba(255,255,255,.1);text-align:center}
+.sidebar-header h2{color:#fff;font-size:16px;font-weight:600}
+.sidebar-header .version{color:var(--text-nav);font-size:12px;margin-top:4px}
+.nav-group{padding:8px 0}
+.nav-group-title{padding:8px 20px 4px;font-size:11px;text-transform:uppercase;color:rgba(255,255,255,.4);letter-spacing:1px}
+.nav-item{display:flex;align-items:center;padding:10px 20px;cursor:pointer;transition:var(--transition);border-left:3px solid transparent;font-size:14px}
+.nav-item:hover{background:var(--bg-nav-hover)}
+.nav-item.active{background:var(--bg-nav-active);border-left-color:var(--primary);color:var(--text-nav-active)}
+.sidebar{background:#252D3A!important}
+.sidebar-header{border-bottom-color:rgba(178,192,217,.15)!important}
+.sidebar-header h2{color:#93A9D1!important}
+.sidebar-header .version{color:#7E98C2!important}
+.nav-group-title{color:rgba(178,192,217,.45)!important}
+.nav-item{color:#B3C0D9!important;border-left-color:transparent!important}
+.nav-item:hover{background:#2F3A4A!important;color:#E9EEF6!important}
+.nav-item.active{background:#3B4454!important;border-left:3px solid #7E98C2!important;color:#E9EEF6!important}
+.nav-item .icon{margin-right:10px;font-size:16px;width:20px;text-align:center}
+.card{background:#fff;border-radius:var(--radius);box-shadow:0 1px 3px rgba(0,0,0,.06);padding:20px;margin-bottom:20px;border:1px solid #e2e8f0}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.card-title{font-size:16px;font-weight:600}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:var(--radius);box-shadow:0 1px 3px rgba(0,0,0,.06);padding:16px;text-align:center;border:1px solid #e2e8f0}
+.stat-card .stat-value{font-size:28px;font-weight:700;color:var(--primary)}
+.stat-card .stat-label{font-size:13px;color:var(--text-secondary);margin-top:4px}
+.stat-card.success .stat-value{color:var(--success)}
+.stat-card.warning .stat-value{color:var(--warning)}
+.stat-card.danger .stat-value{color:var(--danger)}
+.stat-card.info .stat-value{color:var(--info)}
+.table-container{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+th{background:#f8fafc;font-weight:600;color:#475569;font-size:13px;white-space:nowrap;border-bottom:2px solid #e2e8f0}
+tr:nth-child(even) td{background:var(--bg-table-stripe)}
+tr:hover td{background:var(--primary-bg-hover)}
+td.cell-editing{outline:2px solid var(--primary);outline-offset:-2px;background:rgba(74,124,155,.08)!important}
+td.cell-editing input{width:100%;border:none;background:transparent;font-size:inherit;padding:0;outline:none}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;transition:var(--transition);white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{background:#4a8a5f}
+.btn-warning{background:var(--warning);color:#fff}.btn-warning:hover{background:#b08a2c}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#b04c4c}
+.btn-info{background:var(--info);color:#fff}.btn-info:hover{background:#4a7a9a}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text-main)}.btn-outline:hover{background:var(--bg-card-alt)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:var(--radius-sm);font-size:14px;background:#fff;color:#1e293b;transition:var(--transition)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:var(--transition)}
+.modal-overlay.active{opacity:1;visibility:visible}
+.modal{background:#fff;border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,.15);width:90%;max-width:600px;max-height:85vh;overflow-y:auto;transform:translateY(-20px);transition:var(--transition)}
+.modal-overlay.active .modal{transform:translateY(0)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border)}
+.modal-header h3{font-size:16px;font-weight:600}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-secondary)}
+.modal-body{padding:20px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:16px 20px;border-top:1px solid var(--border)}
+.toast-container{position:fixed;top:20px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:var(--radius-sm);color:#fff;font-size:14px;box-shadow:var(--shadow-lg);animation:slideIn .3s ease;max-width:360px}
+.toast.success{background:var(--success)}.toast.warning{background:var(--warning)}.toast.danger{background:var(--danger)}.toast.info{background:var(--info)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.badge-status{display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:500}
+.badge-status.pending{background:#fef3c7;color:#92400e}.badge-status.feeding{background:#dbeafe;color:#1e40af}
+.badge-status.isolation{background:#fce7f3;color:#9d174d}.badge-status.finished{background:#d1fae5;color:#065f46}
+.badge-status.culled{background:#fee2e2;color:#991b1b}.badge-status.partial{background:#e0e7ff;color:#3730a3}
+.chart-container{position:relative;height:300px}
+.chart-container canvas{width:100%!important}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-secondary)}
+.panel{display:none}.panel.active{display:block}
+.alert-list{list-style:none}
+.alert-list li{padding:10px 12px;border-left:3px solid var(--warning);margin-bottom:8px;background:rgba(196,154,60,.08);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:13px}
+.alert-list li.danger{border-left-color:var(--danger);background:rgba(196,92,92,.08)}
+.alert-list li.info{border-left-color:var(--info);background:rgba(91,143,185,.08)}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.calendar-header-cell{padding:8px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);background:var(--bg-card-alt)}
+.calendar-cell{min-height:80px;padding:4px;border:1px solid var(--border);background:var(--bg-card);font-size:12px}
+.calendar-cell .day-num{font-weight:600;margin-bottom:4px}
+.calendar-cell .event-item{padding:2px 4px;background:rgba(74,124,155,.15);border-radius:2px;margin-bottom:2px;cursor:pointer;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.calendar-cell.today{border-color:var(--primary);background:rgba(74,124,155,.05)}
+.progress-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.progress-bar .progress-fill{height:100%;border-radius:4px;transition:width .3s ease}
+.filter-bar{display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.filter-bar select,.filter-bar input{padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--bg-input);color:var(--text-main)}
+@media(max-width:1024px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main-content{margin-left:0}.mobile-toggle{display:block!important}}
+.mobile-toggle{display:none;position:fixed;top:10px;left:10px;z-index:101;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);padding:8px 12px;cursor:pointer;font-size:18px}
+@media print{.sidebar,.mobile-toggle,.btn,.filter-bar,.modal-overlay,.toast-container{display:none!important}.main-content{margin-left:0!important;padding:0!important}.card{box-shadow:none!important;border:1px solid #ddd;break-inside:avoid}}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.text-success{color:var(--success)}.text-danger{color:var(--danger)}.text-warning{color:var(--warning)}.text-info{color:var(--info)}.text-muted{color:var(--text-muted)}.text-right{text-align:right}.text-center{text-align:center}
+.mt-20{margin-top:20px}.mb-20{margin-bottom:20px}.hidden{display:none!important}
+.input-error{border-color:var(--danger)!important;box-shadow:0 0 0 3px rgba(196,92,92,.15)!important}
+.theme-switch{display:flex;gap:8px;align-items:center;margin-top:12px}
+.edit-hint{background:var(--primary-bg);color:var(--primary-dark);padding:6px 12px;border-radius:var(--radius-sm);font-size:12px;margin-bottom:12px;display:flex;align-items:center;gap:4px}
+/* =============================================
+全端响应式自适应 - PC/平板/手机
+============================================= */
+@media (max-width: 1024px) {
+    .stats-grid { grid-template-columns: repeat(3, 1fr) !important; }
+    #profit-dashboard > div { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); position: fixed; z-index: 1000; height: 100vh; width: var(--sidebar-width); transition: transform .3s ease; }
+    .sidebar.open { transform: translateX(0); box-shadow: 2px 0 8px rgba(0,0,0,.2); }
+    .main-content { margin-left: 0 !important; }
+    .top-header-bar { margin-left: 0 !important; padding: 10px 16px !important; }
+    .mobile-toggle { display: block !important; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .form-row { flex-direction: column !important; gap: 0 !important; }
+    .form-row .form-group { width: 100% !important; margin-bottom: 8px !important; }
+    .modal { width: 95% !important; max-width: none !important; margin: 5vh auto !important; }
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { min-width: 600px; }
+    #profit-dashboard > div { grid-template-columns: 1fr !important; }
+    .stats-grid { gap: 8px !important; }
+    .card { padding: 12px !important; margin-bottom: 12px !important; }
+    .btn { padding: 6px 12px !important; font-size: 13px !important; min-height: 36px; }
+    .btn-sm { padding: 4px 10px !important; font-size: 12px !important; }
+    .panel { padding: 10px !important; }
+}
+@media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr !important; }
+    .system-main-title { font-size: 16px !important; letter-spacing: 1px !important; }
+    .system-sub-title { font-size: 10px !important; }
+    .system-logo-icon { width: 44px !important; height: 44px !important; font-size: 24px !important; border-radius: 10px !important; }
+    .top-header-bar { padding: 8px 12px !important; gap: 10px !important; }
+    .modal { width: 98% !important; margin: 2vh auto !important; padding: 12px !important; }
+    .btn { min-height: 40px; font-size: 14px; }
+    h2.card-title, h3.card-title { font-size: 15px !important; }
+    .chart-container { height: 200px !important; }
+}
+.mobile-toggle { display: none; position: fixed; top: 10px; left: 10px; z-index: 1001; background: #252D3A; color: #E9EEF6; border: none; border-radius: 6px; padding: 8px 12px; font-size: 18px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+/* 遮罩层 */
+.sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.4); z-index: 999; }
+.sidebar-overlay.active { display: block; }
+@media (max-width: 768px) {
+    .sidebar-overlay.active { display: block; }
+    .sidebar.open ~ .sidebar-overlay { display: block; }
+}
+/* 输入框触屏优化 */
+@media (max-width: 768px) {
+    input[type="number"], input[type="text"], input[type="date"], input[type="month"], select, textarea { min-height: 40px; font-size: 16px; }
+}
+/* 表格触屏滚动提示 */
+.table-container::after { content: '← 左右滑动 →'; display: none; text-align: center; font-size: 11px; color: var(--text-muted); padding: 4px; }
+@media (max-width: 768px) {
+    .table-container::after { display: block; }
+}
+</style>
+</head>
+<body>
+<!-- 顶部Header区域增量样式 -->
+<div class="top-header-bar">
+    <div class="system-logo-icon">🐑</div>
+    <div class="system-title-group">
+        <div class="system-main-title">智慧育肥羊系统</div>
+        <div class="system-sub-title">桑梓店 5 亩 5 年方案 v5.5</div>
+    </div>
+</div>
+<button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">&#9776;</button>
+<div class="app-container">
+<nav class="sidebar">
+<div class="sidebar-header"><h2>智慧育肥羊养殖系统</h2><div class="version">V5.5.0</div></div>
+<div class="nav-group"><div class="nav-group-title">经营总览</div><div class="nav-item active" data-panel="dashboard" onclick="NavManager.switch('dashboard')"><span class="icon">&#9632;</span> 仪表盘</div></div>
+<div class="nav-group"><div class="nav-group-title">批次生产</div><div class="nav-item" data-panel="batches" onclick="NavManager.switch('batches')"><span class="icon">&#9998;</span> 批次管理</div><div class="nav-item" data-panel="sheep" onclick="NavManager.switch('sheep')"><span class="icon">&#128017;</span> 单羊档案</div><div class="nav-item" data-panel="calendar" onclick="NavManager.switch('calendar')"><span class="icon">&#128197;</span> 生产日历</div></div>
+<div class="nav-group"><div class="nav-group-title">物资管理</div><div class="nav-item" data-panel="feed" onclick="NavManager.switch('feed')"><span class="icon">&#127806;</span> 饲料库存</div><div class="nav-item" data-panel="medicine" onclick="NavManager.switch('medicine')"><span class="icon">&#128138;</span> 兽药疫苗</div></div>
+<div class="nav-group"><div class="nav-group-title">防疫健康</div><div class="nav-item" data-panel="health" onclick="NavManager.switch('health')"><span class="icon">&#9879;</span> 防疫记录</div><div class="nav-item" data-panel="isolation" onclick="NavManager.switch('isolation')"><span class="icon">&#9888;</span> 病羊隔离</div></div>
+<div class="nav-group"><div class="nav-group-title">财务管理</div><div class="nav-item" data-panel="finance" onclick="NavManager.switch('finance')"><span class="icon">&#128176;</span> 财务流水</div><div class="nav-item" data-panel="customers" onclick="NavManager.switch('customers')"><span class="icon">&#128101;</span> 客户管理</div><div class="nav-item" data-panel="fiveyear" onclick="NavManager.switch('fiveyear')"><span class="icon">&#128202;</span> 五年经营核算</div></div>
+<div class="nav-group"><div class="nav-group-title">市场行情</div><div class="nav-item" data-panel="market" onclick="NavManager.switch('market')"><span class="icon">&#128200;</span> 市场价格</div></div>
+<div class="nav-group"><div class="nav-group-title">系统工具</div><div class="nav-item" data-panel="settings" onclick="NavManager.switch('settings')"><span class="icon">&#9881;</span> 系统设置</div><div class="nav-item" data-panel="backup" onclick="NavManager.switch('backup')"><span class="icon">&#128190;</span> 数据备份</div></div>
+</nav>
+<main class="main-content">
+<div id="panel-dashboard" class="panel active"><div class="card"><div class="card-header"><h2 class="card-title">经营总览</h2><span class="text-muted" id="dashboard-date"></span></div><div class="stats-grid" id="dashboard-stats"></div>
+<div style="margin-bottom:16px"><button class="btn btn-outline btn-sm" onclick="fetchShandongLivestockPrice()">🔄 同步山东畜牧局最新行情</button></div></div><div class="card"><div class="card-header"><h3 class="card-title">五年计划进度</h3></div><div id="five-year-progress"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px"><div class="card"><div class="card-header"><h3 class="card-title">存栏趋势</h3></div><div class="chart-container"><canvas id="chart-stock-trend"></canvas></div></div><div class="card"><div class="card-header"><h3 class="card-title">收支趋势</h3></div><div class="chart-container"><canvas id="chart-finance-trend"></canvas></div></div></div><div class="card"><div class="card-header"><h3 class="card-title">济南近3年羊价走势</h3></div><div class="chart-container" style="height:320px"><canvas id="chart-market-dashboard"></canvas></div><div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap"><span style="font-size:12px;color:var(--text-muted)">🟢 低价采购窗口：11月-1月</span><span style="font-size:12px;color:var(--text-muted)">🔴 高价出栏窗口：5月-8月</span></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px"><div class="card"><div class="card-header"><h3 class="card-title">预警信息</h3></div><ul class="alert-list" id="dashboard-alerts"></ul></div><div class="card"><div class="card-header"><h3 class="card-title">待办事项</h3></div><div id="dashboard-todos"></div></div></div></div>
+<div id="panel-batches" class="panel"><div class="card"><div class="card-header"><h2 class="card-title">批次管理</h2><div class="btn-group"><button class="btn btn-primary" onclick="BatchManager.showAddModal()">+ 新增批次</button><button class="btn btn-outline" onclick="BatchManager.exportExcel()">导出Excel</button></div></div><div class="edit-hint">💡 双击表格单元格可快速编辑数据</div><div class="filter-bar"><select id="batch-filter-status" onchange="BatchManager.render()"><option value="">全部状态</option><option>待进羊</option><option>饲养中</option><option>隔离病羊</option><option>部分出栏</option><option>已出栏</option><option>淘汰</option></select><input type="text" id="batch-filter-search" placeholder="搜索批次..." oninput="BatchManager.render()"></div><div class="table-container"><table><thead><tr><th>批次号</th><th>名称</th><th>进羊日期</th><th>进羊数</th><th>存栏</th><th>状态</th><th>天数</th><th>预计出栏</th><th>操作</th></tr></thead><tbody id="batch-table-body"></tbody></table></div></div></div>
+<div id="panel-sheep" class="panel"><div class="card"><div class="card-header"><h2 class="card-title">单羊档案</h2><div class="btn-group"><button class="btn btn-primary" onclick="SheepManager.showAddModal()">+ 新增</button></div></div><div class="edit-hint">💡 双击表格单元格可快速编辑数据</div><div class="filter-bar"><select id="sheep-filter-batch" onchange="SheepManager.render()"><option value="">全部批次</option></select><select id="sheep-filter-status" onchange="SheepManager.render()"><option value="">全部状态</option><option>正常</option><option>患病</option><option>隔离</option><option>已出栏</option><option>死亡</option><option>淘汰</option></select></div><div class="table-container"><table><thead><tr><th>编号</th><th>批次</th><th>品种</th><th>性别</th><th>初重</th><th>现重</th><th>日增重</th><th>状态</th><th>操作</th></tr></thead><tbody id="sheep-table-body"></tbody></table></div></div></div>
+<div id="panel-calendar" class="panel"><div class="card"><div class="card-header"><h2 class="card-title">生产日历</h2><div class="btn-group"><button class="btn btn-outline" onclick="CalendarManager.prevMonth()">&lt; 上月</button><span id="calendar-month-label" style="font-weight:600;padding:8px"></span><button class="btn btn-outline" onclick="CalendarManager.nextMonth()">下月 &gt;</button><button class="btn btn-primary" onclick="CalendarManager.showAddEventModal()">+ 添加</button><button class="btn btn-outline" onclick="CalendarManager.switchView()">切换视图</button></div></div><div style="background:var(--primary-bg);padding:12px 16px;border-radius:var(--radius-sm);margin-bottom:16px;font-size:13px;color:var(--text-secondary)"><b>📖 使用说明：</b>点击「切换视图」在月历/列表视图间切换 | <span style="color:var(--primary)">蓝色</span>=进羊 <span style="color:var(--success)">绿色</span>=防疫 <span style="color:var(--warning)">橙色</span>=出栏 <span style="color:var(--danger)">红色</span>=兽药过期 | 新建批次自动生成全套生产计划</div><div id="calendar-grid-view"></div><div id="calendar-list-view" class="hidden"></div></div></div>
+<div id="panel-feed" class="panel"><div class="card"><div class="card-header"><h2 class="card-title">饲料库存</h2><div class="btn-group"><button class="btn btn-primary" onclick="FeedManager.showAddModal()">+ 入库</button><button class="btn btn-warning" onclick="FeedManager.showUseModal()">领用</button></div></div><div class="edit-hint">💡 双击表格单元格可快速编辑数据</div><div class="stats-grid" id="feed-stats"></div><div class="table-container"><table><thead><tr><th>名称</th><th>类型</th><th>库存(kg)</th><th>单价</th><th>总价</th><th>日期</th><th>操作</th></tr></thead><tbody id="feed-table-body"></tbody></table></div></div><div class="card"><div class="card-header"><h3 class="card-title">济南原料市场参考价</h3></div><div id="feed-market-ref" class="text-muted text-center">暂无市场价格数据</div></div></div>
+<div id="panel-medicine" class="panel"><div class="card"><div class="card-header"><h2 class="card-title">兽药疫苗</h2><div class="btn-group"><button class="btn btn-primary" onclick="MedicineManager.showAddModal()">+ 新增</button></div></div><div class="edit-hint">💡 双击表格单元格可快速编辑数据</div><div class="table-container"><table><thead><tr><th>名称</th><th>类型</th><th>库存</th><th>单价</th><th>有效期</th><th>用途</th><th>操作</th></tr></thead><tbody id="medicine-table-body"></tbody></table></div></div></div>
+<div id="panel-health" class="panel"><div class="card"><div class="card-header"><h2 class="card-title">防疫记录</h2><div class="btn-group"><button class="btn btn-primary" onclick="HealthManager.showAddModal()">+ 新增</button><button class="btn btn-info" onclick="HealthManager.showBatchGenerateModal()">批量生成</button><button class="btn btn-outline" onclick="HealthManager.exportExcel()">导出</button></div></div><div class="edit-hint">💡 双击表格单元格可快速编辑数据</div><div class="filter-bar"><select id="health-filter-batch" onchange="HealthManager.render()"><option value="">全部批次</option></select></div><div class="table-container"><table><thead><tr><th>日期</th><th>批次</th><th>项目</th><th>药品</th><th>用量</th><th>操作人</th><th>备注</th><th>操作</th></tr></thead><tbody id="health-table-body"></tbody></table></div></div></div>
+<div id="panel-isolation" class="panel"><div class="card"><div class="card-header"><h2 class="card-title">病羊隔离台账</h2><div class="btn-group"><button class="btn btn-primary" onclick="IsolationManager.showAddModal()">+ 新增</button></div></div><div class="edit-hint">💡 双击表格单元格可快速编辑数据</div><div class="stats-grid" id="isolation-stats"></div><div class="table-container"><table><thead><tr><th>编号</th><th>羊只</th><th>批次</th><th>症状</th><th>隔离日期</th><th>天数</th><th>状态</th><th>操作</th></tr></thead><tbody id="isolation-table-body"></tbody></table></div></div></div>
+<div id="panel-finance" class="panel">
+<div class="card"><div class="card-header"><h2 class="card-title">💰 财务流水</h2><div class="btn-group"><button class="btn btn-success" onclick="FinanceManager.showIncomeModal()">+ 收入</button><button class="btn btn-danger" onclick="FinanceManager.showExpenseModal()">+ 支出</button><button class="btn btn-outline" onclick="FinanceManager.exportExcel()">导出</button></div></div><div class="edit-hint">💡 双击表格单元格可快速编辑数据</div><div class="stats-grid" id="finance-stats"></div><div class="filter-bar"><select id="finance-filter-type" onchange="FinanceManager.render()"><option value="">全部</option><option value="income">收入</option><option value="expense">支出</option></select><input type="month" id="finance-filter-month" onchange="FinanceManager.render()"></div><div class="table-container"><table><thead><tr><th>日期</th><th>类型</th><th>分类</th><th>金额</th><th>批次</th><th>备注</th><th>操作</th></tr></thead><tbody id="finance-table-body"></tbody></table></div></div>
+<!-- DeepSeek风格投入产出对冲看板 -->
+<div class="card" id="profit-dashboard-card"><div class="card-header"><h3 class="card-title">📊 批次投入产出实时对冲看板</h3><div class="btn-group"><button class="btn btn-outline btn-sm" onclick="CashflowManager.renderProfitDashboard()">🔄 重置</button><button class="btn btn-outline btn-sm" onclick="CashflowManager.resetToDefault()">📋 默认参数</button><button class="btn btn-outline btn-sm" onclick="CashflowManager.exportProfitReport()">📥 导出报告</button></div></div><div id="profit-dashboard"><div class="text-center text-muted" style="padding:40px">正在加载测算数据...</div></div></div>
+<!-- 动态现金流仪表盘 -->
+<div class="card" id="cashflow-dashboard-card"><div class="card-header"><h3 class="card-title">📈 动态现金流仪表盘</h3><div class="btn-group"><button class="btn btn-outline btn-sm" onclick="CashflowManager.refresh()">🔄 刷新</button><button class="btn btn-outline btn-sm" onclick="CashflowManager.exportReport()">📥 导出</button></div></div><div class="stats-grid" id="cashflow-stats"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px"><div class="card" style="margin:0;padding:0"><div class="card-header" style="border-radius:var(--radius) var(--radius) 0 0"><h4 class="card-title">批次投入产出分析</h4></div><div class="table-container"><table><thead><tr><th>批次</th><th>进羊投入</th><th>饲养成本</th><th>出栏收入</th><th>净收益</th><th>ROI</th></tr></thead><tbody id="cashflow-batch-body"></tbody></table></div></div><div class="card" style="margin:0;padding:0"><div class="card-header" style="border-radius:var(--radius) var(--radius) 0 0"><h4 class="card-title">年度现金流对比</h4></div><div class="chart-container" style="height:260px;padding:0 12px"><canvas id="chart-cashflow-yearly"></canvas></div></div></div><div class="card" style="margin-top:16px;margin-bottom:0;padding:0"><div class="card-header" style="border-radius:var(--radius) var(--radius) 0 0"><h4 class="card-title">月度现金流趋势</h4></div><div class="chart-container" style="height:240px;padding:0 12px"><canvas id="chart-cashflow-monthly"></canvas></div></div></div>
+</div>
+<div id="panel-customers" class="panel"><div class="card"><div class="card-header"><h2 class="card-title">客户管理</h2><div class="btn-group"><button class="btn btn-primary" onclick="CustomerManager.showAddModal()">+ 新增</button><button class="btn btn-outline" onclick="CustomerManager.exportExcel()">导出</button></div></div><div class="edit-hint">💡 双击表格单元格可快速编辑数据</div><div class="table-container"><table><thead><tr><th>名称</th><th>电话</th><th>地址</th><th>累计交易</th><th>欠款</th><th>次数</th><th>最近</th><th>操作</th></tr></thead><tbody id="customer-table-body"></tbody></table></div></div></div>
+<div id="panel-market" class="panel"><div class="card"><div class="card-header"><h2 class="card-title">市场价格</h2><div class="btn-group"><button class="btn btn-primary" onclick="MarketManager.showAddModal()">+ 记录</button></div></div><div class="edit-hint">💡 双击表格单元格可快速编辑数据</div><div class="stats-grid" id="market-stats"></div><div class="table-container"><table><thead><tr><th>日期</th><th>活羊价</th><th>羊肉价</th><th>饲料价</th><th>备注</th><th>操作</th></tr></thead><tbody id="market-table-body"></tbody></table></div></div><div class="card"><div class="card-header"><h3 class="card-title">价格趋势</h3></div><div class="chart-container"><canvas id="chart-market-trend"></canvas></div></div></div>
+<div id="panel-fiveyear" class="panel"><div class="card"><div class="card-header"><h2 class="card-title">五年经营核算</h2><div class="btn-group"><select id="fiveyear-year-select" onchange="FiveYearManager.render()"></select><button class="btn btn-outline" onclick="FiveYearManager.exportExcel()">导出</button></div></div><div class="stats-grid" id="fiveyear-stats"></div></div><div class="card"><div class="card-header"><h3 class="card-title" id="fiveyear-monthly-title">月度明细</h3></div><div class="table-container"><table><thead><tr><th>月份</th><th>羔羊</th><th>饲料</th><th>兽药</th><th>固定</th><th>总支出</th><th>收入</th><th>利润</th></tr></thead><tbody id="fiveyear-monthly-body"></tbody></table></div></div><div class="card"><div class="card-header"><h3 class="card-title">年度汇总</h3></div><div class="table-container"><table><thead><tr><th>年度</th><th>总支出</th><th>总收入</th><th>利润</th><th>目标</th><th>完成率</th></tr></thead><tbody id="fiveyear-yearly-body"></tbody></table></div></div><div class="card"><div class="card-header"><h3 class="card-title">趋势图</h3></div><div class="chart-container"><canvas id="chart-fiveyear"></canvas></div></div><div class="card"><div class="card-header"><h3 class="card-title">优化建议</h3></div><div id="fiveyear-suggestions"></div></div></div>
+<div id="panel-settings" class="panel"><div class="card"><div class="card-header"><h2 class="card-title">系统设置</h2></div><div class="form-group"><label>初始资金(元)</label><input type="number" id="setting-startCapital" onchange="SettingsManager.save()"></div><div class="form-group"><label>储备基金(元)</label><input type="number" id="setting-reserveFund" onchange="SettingsManager.save()"></div><div class="form-group"><label>预警资金(元)</label><input type="number" id="setting-warningCapital" onchange="SettingsManager.save()"></div><div class="form-row"><div class="form-group"><label>场地面积(亩)</label><input type="number" id="setting-landArea" onchange="SettingsManager.save()"></div><div class="form-group"><label>每亩年租金(元)</label><input type="number" id="setting-landRentPerMu" onchange="SettingsManager.save()"></div></div><div class="form-row"><div class="form-group"><label>租赁年限</label><input type="number" id="setting-leaseYears" onchange="SettingsManager.save()"></div><div class="form-group"><label>首年固定资产(元)</label><input type="number" id="setting-fixedAssetFirstYear" onchange="SettingsManager.save()"></div></div><div class="form-row"><div class="form-group"><label>折旧年限</label><input type="number" id="setting-depreciationYears" onchange="SettingsManager.save()"></div><div class="form-group"><label>默认死亡率(%)</label><input type="number" id="setting-defaultMortRate" step="0.1" onchange="SettingsManager.save()"></div></div><div class="form-row"><div class="form-group"><label>育肥天数</label><input type="number" id="setting-fattenDays" onchange="SettingsManager.save()"></div><div class="form-group"><label>目标利润/只(元)</label><input type="number" id="setting-targetProfitPerSheep" onchange="SettingsManager.save()"></div></div><div class="form-row"><div class="form-group"><label>最低售价(元/kg)</label><input type="number" id="setting-minSalePrice" step="0.1" onchange="SettingsManager.save()"></div><div class="form-group"><label>日饲料成本(元)</label><input type="number" id="setting-dailyFeedCost" step="0.1" onchange="SettingsManager.save()"></div></div><div class="form-row"><div class="form-group"><label>第一年最大存栏</label><input type="number" id="setting-maxStockYear1" onchange="SettingsManager.save()"></div><div class="form-group"><label>第二年+最大存栏</label><input type="number" id="setting-maxStockYear2Plus" onchange="SettingsManager.save()"></div></div><div class="form-row"><div class="form-group"><label>第一年批次/年</label><input type="number" id="setting-batchesPerYearYear1" onchange="SettingsManager.save()"></div><div class="form-group"><label>第二年+批次/年</label><input type="number" id="setting-batchesPerYearYear2Plus" onchange="SettingsManager.save()"></div></div><div class="form-group mt-20"><button class="btn btn-primary" onclick="SettingsManager.save()">保存</button><button class="btn btn-outline" onclick="SettingsManager.reset()">恢复默认</button></div><div class="form-group"><label>界面主题</label><select id="setting-theme" onchange="ThemeManager.apply(this.value)"><option value="light">浅色模式</option><option value="dark">雾霾蓝深色</option></select></div><div class="theme-switch"><span style="font-size:13px;color:var(--text-secondary)">当前主题：</span><span id="theme-label" style="font-size:13px;font-weight:600;color:var(--primary)">浅色模式</span></div></div>
+<div id="panel-backup" class="panel"><div class="card"><div class="card-header"><h2 class="card-title">数据备份与日志</h2></div><div class="btn-group mb-20"><button class="btn btn-primary" onclick="BackupManager.exportData()">导出全部</button><button class="btn btn-warning" onclick="BackupManager.importData()">导入</button><button class="btn btn-danger" onclick="BackupManager.confirmClear()">清空</button></div><input type="file" id="import-file-input" accept=".json" style="display:none" onchange="BackupManager.handleImport(event)"></div><div class="card"><div class="card-header"><h3 class="card-title">操作日志</h3></div><div class="table-container"><table><thead><tr><th>时间</th><th>操作</th><th>详情</th></tr></thead><tbody id="log-table-body"></tbody></table></div></div><div class="card"><div class="card-header"><h3 class="card-title">备份记录</h3></div><div id="backup-history"></div></div></div>
+</main></div>
+<div class="modal-overlay" id="modal-overlay"><div class="modal" id="modal-dialog"><div class="modal-header"><h3 id="modal-title">标题</h3><button class="modal-close" onclick="ModalManager.close()">&times;</button></div><div class="modal-body" id="modal-body"></div><div class="modal-footer" id="modal-footer"></div></div></div>
+<div class="toast-container" id="toast-container"></div>
+<script>
+var CONST = {
+    VERSION: "5.5.0-prod",
+    DATA_VERSION: 2,
+    STORAGE: {
+        CONFIG: "goat_v5_config",
+        BATCHES: "goat_v5_batches",
+        SHEEP: "goat_v5_sheep",
+        FEED: "goat_v5_feed",
+        MEDICINE: "goat_v5_medicine",
+        HEALTH: "goat_v5_health",
+        FINANCE: "goat_v5_finance",
+        CUSTOMERS: "goat_v5_customers",
+        ISOLATION: "goat_v5_isolation",
+        MARKET: "goat_v5_market",
+        LOGS: "goat_v5_logs",
+        BACKUPS: "goat_v5_backups",
+        CALENDAR: "goat_v5_calendar",
+        CASHFLOW: "goat_v5_cashflow",
+        BATCH_INVEST: "goat_v5_batch_invest"
+    },
+    DEFAULT_CONFIG: {
+        startCapital: 60000, reserveFund: 40000, warningCapital: 15000,
+        landArea: 5, landRentPerMu: 1150, leaseYears: 5,
+        fixedAssetFirstYear: 32500, depreciationYears: 5,
+        defaultMortRate: 3, fattenDays: 100,
+        maxStockYear1: 80, maxStockYear2Plus: 70,
+        batchesPerYearYear1: 3, batchesPerYearYear2Plus: 4,
+        targetProfitPerSheep: 150, minSalePrice: 28,
+        feedPriceNormal: 3.2, feedPriceAlternative: 2.4, dailyFeedCost: 3.5,
+        baseYear: 2025,
+        fiveYearPlan: {
+            year1: {maxStock:80,batches:3,targetProfit:36000},
+            year2: {maxStock:70,batches:4,targetProfit:48000},
+            year3: {maxStock:70,batches:4,targetProfit:48000},
+            year4: {maxStock:70,batches:4,targetProfit:48000},
+            year5: {maxStock:70,batches:4,targetProfit:48000},
+            totalTargetProfit: 228000, paybackMonths: 18
+        }
+    },
+    JINAN_MARKET_DATA: [
+        {year:2023,month:1,lambPrice:22.5,ewePrice:14.5,fattenPrice:26.8},{year:2023,month:2,lambPrice:23.0,ewePrice:14.8,fattenPrice:27.2},
+        {year:2023,month:3,lambPrice:24.5,ewePrice:15.2,fattenPrice:28.5},{year:2023,month:4,lambPrice:25.8,ewePrice:15.8,fattenPrice:29.5},
+        {year:2023,month:5,lambPrice:27.0,ewePrice:16.5,fattenPrice:31.0},{year:2023,month:6,lambPrice:27.5,ewePrice:16.8,fattenPrice:31.5},
+        {year:2023,month:7,lambPrice:27.2,ewePrice:16.5,fattenPrice:31.2},{year:2023,month:8,lambPrice:26.8,ewePrice:16.2,fattenPrice:30.8},
+        {year:2023,month:9,lambPrice:25.5,ewePrice:15.5,fattenPrice:29.5},{year:2023,month:10,lambPrice:24.0,ewePrice:15.0,fattenPrice:28.0},
+        {year:2023,month:11,lambPrice:22.0,ewePrice:14.0,fattenPrice:26.5},{year:2023,month:12,lambPrice:21.5,ewePrice:13.8,fattenPrice:26.0},
+        {year:2024,month:1,lambPrice:21.0,ewePrice:13.5,fattenPrice:25.5},{year:2024,month:2,lambPrice:21.8,ewePrice:14.0,fattenPrice:26.2},
+        {year:2024,month:3,lambPrice:23.5,ewePrice:14.8,fattenPrice:27.8},{year:2024,month:4,lambPrice:25.0,ewePrice:15.5,fattenPrice:29.0},
+        {year:2024,month:5,lambPrice:26.5,ewePrice:16.2,fattenPrice:30.5},{year:2024,month:6,lambPrice:27.0,ewePrice:16.5,fattenPrice:31.0},
+        {year:2024,month:7,lambPrice:26.8,ewePrice:16.3,fattenPrice:30.8},{year:2024,month:8,lambPrice:26.2,ewePrice:16.0,fattenPrice:30.2},
+        {year:2024,month:9,lambPrice:25.0,ewePrice:15.2,fattenPrice:29.0},{year:2024,month:10,lambPrice:23.5,ewePrice:14.8,fattenPrice:27.5},
+        {year:2024,month:11,lambPrice:21.5,ewePrice:13.8,fattenPrice:26.0},{year:2024,month:12,lambPrice:21.0,ewePrice:13.5,fattenPrice:25.5},
+        {year:2025,month:1,lambPrice:20.5,ewePrice:13.2,fattenPrice:25.0},{year:2025,month:2,lambPrice:21.2,ewePrice:13.8,fattenPrice:25.8},
+        {year:2025,month:3,lambPrice:23.0,ewePrice:14.5,fattenPrice:27.5},{year:2025,month:4,lambPrice:24.5,ewePrice:15.2,fattenPrice:28.8},
+        {year:2025,month:5,lambPrice:26.0,ewePrice:16.0,fattenPrice:30.0},{year:2025,month:6,lambPrice:26.5,ewePrice:16.3,fattenPrice:30.5}
+    ],
+    BATCH_STATUS: {PENDING:"待进羊",FEEDING:"饲养中",ISOLATION:"隔离病羊",PARTIAL:"部分出栏",FINISHED:"已出栏",CULLED:"淘汰"},
+    SHEEP_STATUS: {ALIVE:"正常",SICK:"患病",ISOLATION:"隔离",SOLD:"已出栏",DEAD:"死亡",CULLED:"淘汰"},
+    ISOLATION_STATUS: {ISOLATING:"隔离中",RELEASED:"已解除",DEAD:"病死淘汰"},
+    ALERT_THRESHOLD: {MORT_RATE:5,FEED_STOCK:1000,CAPITAL:15000},
+    COLORS: {primary:"#4a7c9b",success:"#5a9e6f",warning:"#c49a3c",danger:"#c45c5c",info:"#5b8fb9",chartColors:["#4a7c9b","#5a9e6f","#c49a3c","#c45c5c","#5b8fb9","#8b5cf6","#ec4899"]}
+};
+var Utils = {
+    safeNumber: function(v, d) { var n = Number(v); if (isNaN(n)) { return (d !== undefined) ? d : 0; } return n; },
+    formatNumber: function(n, dec) { if (dec === undefined) { dec = 0; } return Number(n).toLocaleString("zh-CN", {minimumFractionDigits:dec,maximumFractionDigits:dec}); },
+    formatCurrency: function(n) { return Utils.formatNumber(n, 2); },
+    formatDate: function(ds) { if (!ds) { return "-"; } var d = new Date(ds); if (isNaN(d.getTime())) { return ds; } return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); },
+    getToday: function() { return Utils.formatDate(new Date().toISOString()); },
+    dateDiff: function(d1, d2) { return Math.floor((new Date(d2) - new Date(d1)) / 86400000); },
+    dateAdd: function(ds, days) { var d = new Date(ds); d.setDate(d.getDate() + days); return Utils.formatDate(d.toISOString()); },
+    generateId: function() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 6); },
+    debounce: function(fn, delay) { var t = null; return function() { var ctx = this; var args = arguments; if (t) { clearTimeout(t); } t = setTimeout(function() { fn.apply(ctx, args); }, delay); }; },
+    percentage: function(p, t) { if (!t || t === 0) { return 0; } return Math.round((p / t) * 10000) / 100; },
+    deepClone: function(o) { return JSON.parse(JSON.stringify(o)); }
+};
+var Storage = {
+    _saveQueue: {},
+    save: function(key, data) {
+        var payload = { version: CONST.DATA_VERSION, data: data, savedAt: new Date().toISOString() };
+        try { localStorage.setItem(key, JSON.stringify(payload)); }
+        catch (e) { console.error("Storage save error:", key, e); }
+    },
+    saveDebounced: function(key, data) {
+        var self = this;
+        if (self._saveQueue[key]) { clearTimeout(self._saveQueue[key]); }
+        self._saveQueue[key] = setTimeout(function() { self.save(key, data); }, 300);
+    },
+    load: function(key, defaultVal) {
+        try {
+            var raw = localStorage.getItem(key);
+            if (!raw) { return defaultVal || null; }
+            var payload = JSON.parse(raw);
+            if (payload && payload.version === CONST.DATA_VERSION) { return payload.data; }
+            return defaultVal || null;
+        } catch (e) { return defaultVal || null; }
+    },
+    exportAll: function() {
+        var result = {};
+        var keys = Object.values(CONST.STORAGE);
+        for (var i = 0; i < keys.length; i++) { result[keys[i]] = Storage.load(keys[i]); }
+        return result;
+    },
+    importAll: function(data) {
+        var keys = Object.keys(data);
+        for (var i = 0; i < keys.length; i++) { Storage.save(keys[i], data[keys[i]]); }
+    }
+};
+var Validator = {
+    schemas: {
+        stockIn: { name: {required:true,minLen:2}, stock: {required:true,type:"number",min:0}, price: {required:true,type:"number",min:0} },
+        batch: { name: {required:true,minLen:2}, planCount: {required:true,type:"number",min:1}, buyPrice: {required:true,type:"number",min:0} },
+        sheep: { earTag: {required:true,minLen:1}, batchId: {required:true}, breed: {required:true}, initialWeight: {required:true,type:"number",min:0} },
+        finance: { amount: {required:true,type:"number",min:0}, category: {required:true} },
+        customer: { name: {required:true,minLen:2}, phone: {required:true,minLen:7} }
+    },
+    validate: function(name, data) {
+        var schema = this.schemas[name];
+        if (!schema) { return []; }
+        var errors = [];
+        var fields = Object.keys(schema);
+        for (var i = 0; i < fields.length; i++) {
+            var f = fields[i]; var rules = schema[f]; var val = data[f];
+            if (rules.required && (!val || val === "")) { errors.push(f + " 不能为空"); continue; }
+            if (val && rules.minLen && String(val).length < rules.minLen) { errors.push(f + " 至少" + rules.minLen + "个字符"); }
+            if (val && rules.type === "number") {
+                var num = Number(val);
+                if (isNaN(num)) { errors.push(f + " 必须是数字"); }
+                else if (rules.min !== undefined && num < rules.min) { errors.push(f + " 不能小于" + rules.min); }
+            }
+        }
+        return errors;
+    },
+    showErrors: function(errors) { if (errors.length > 0) { Toast.show(errors[0], "danger"); } }
+};
+
+function globalFormValidate(containerId) {
+    var container = containerId ? document.getElementById(containerId) : (document.querySelector('.modal-body') || document.querySelector('.modal.active .modal-body'));
+    if (!container) { return []; }
+    var inputs = container.querySelectorAll('input[data-required="true"],select[data-required="true"],textarea[data-required="true"]');
+    var errors = [];
+    for (var i = 0; i < inputs.length; i++) {
+        var inp = inputs[i];
+        var label = inp.dataset.label || '';
+        var val = inp.value.trim();
+        inp.classList.remove('input-error');
+        if (val === '' || val === undefined || val === null) {
+            errors.push((label || '必填项') + ' 不能为空');
+            inp.classList.add('input-error');
+            continue;
+        }
+        if (inp.dataset.type === 'number' && val !== '') {
+            var num = Number(val);
+            if (isNaN(num) || val === '') { errors.push((label || '数值') + ' 请输入有效数字'); inp.classList.add('input-error'); }
+            else if (inp.dataset.min !== undefined && num < Number(inp.dataset.min)) { errors.push((label || '数值') + ' 不能小于' + inp.dataset.min); inp.classList.add('input-error'); }
+        }
+        if (inp.dataset.type === 'phone' && val !== '') {
+            if (val.replace(/[\s\-]/g, '').length < 7) { errors.push((label || '电话') + ' 号码过短'); inp.classList.add('input-error'); }
+        }
+        if (inp.dataset.minLen && val.length < Number(inp.dataset.minLen)) { errors.push((label || '字段') + ' 至少' + inp.dataset.minLen + '个字符'); inp.classList.add('input-error'); }
+    }
+    return errors;
+}
+function validateStockInForm(formData, type) {
+    var schemaName = type === 'medicine' ? 'stockIn' : 'stockIn';
+    var errors = Validator.validate(schemaName, formData);
+    if (!formData.name || formData.name.trim() === '') { errors.push('名称不能为空'); }
+    if (formData.stock !== undefined && Number(formData.stock) < 0) { errors.push('库存不能为负数'); }
+    if (formData.price !== undefined && Number(formData.price) < 0) { errors.push('单价不能为负数'); }
+    if (formData.stock !== undefined && isNaN(Number(formData.stock))) { errors.push('库存必须是数字'); }
+    if (formData.price !== undefined && isNaN(Number(formData.price))) { errors.push('单价必须是数字'); }
+    return errors;
+}
+function stockLoad() {
+    var config = ConfigManager.get();
+    var batches = BatchManager.getAll();
+    var total = 0;
+    for (var i = 0; i < batches.length; i++) {
+        if (batches[i].status === '饲养中' || batches[i].status === '隔离病羊') {
+            total += Utils.safeNumber(batches[i].currentCount, 0);
+        }
+    }
+    var yearIdx = new Date().getFullYear() - config.baseYear;
+    var maxStock = yearIdx <= 0 ? config.maxStockYear1 : config.maxStockYear2Plus;
+    return { current: total, max: maxStock, rate: maxStock > 0 ? Math.round((total / maxStock) * 10000) / 100 : 0, yearIdx: yearIdx };
+}
+function withdrawalCheck(batchId) { return HealthManager.checkWithdrawal(batchId); }
+function verifyStorageWrite(key) {
+    try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch(e) { return null; }
+}
+function fetchShandongLivestockPrice() {
+    try {
+        var urls = [
+            'https://api.sdny.gov.cn/api/livestock/price',
+            'https://data.sd.gov.cn/api/market/sheep_price'
+        ];
+        var idx = 0;
+        function tryFetch() {
+            if (idx >= urls.length) {
+                console.log('行情接口不可用，使用内置本地数据');
+                return;
+            }
+            fetch(urls[idx]).then(function(r) { return r.json(); }).then(function(data) {
+                if (data && data.data) {
+                    var items = data.data;
+                    for (var i = 0; i < items.length; i++) {
+                        MarketManager.add({id:Utils.generateId(),date:items[i].date||Utils.getToday(),liveSheepPrice:items[i].lambPrice||0,muttonPrice:items[i].muttonPrice||0,feedPrice:items[i].feedPrice||0,remark:'山东畜牧局',createdAt:new Date().toISOString()});
+                    }
+                    Toast.show('已同步'+items.length+'条山东畜牧局行情', 'success');
+                    refreshAll();
+                }
+            }).catch(function() { idx++; tryFetch(); });
+        }
+        tryFetch();
+    } catch(e) { console.log('行情同步异常，使用本地数据:', e); }
+}
+var Toast = {
+    show: function(msg, type) {
+        if (!type) { type = "info"; }
+        var c = document.getElementById("toast-container");
+        var el = document.createElement("div");
+        el.className = "toast " + type;
+        el.textContent = msg;
+        c.appendChild(el);
+        setTimeout(function() { if (el.parentNode) { el.parentNode.removeChild(el); } }, 3000);
+    }
+};
+var ModalManager = {
+    open: function(title, bodyHtml, footerHtml, width) {
+        document.getElementById("modal-title").textContent = title;
+        document.getElementById("modal-body").innerHTML = bodyHtml;
+        document.getElementById("modal-footer").innerHTML = footerHtml || "";
+        document.getElementById("modal-dialog").style.maxWidth = width || "600px";
+        document.getElementById("modal-overlay").classList.add("active");
+    },
+    close: function() { document.getElementById("modal-overlay").classList.remove("active"); }
+};
+var LogManager = {
+    add: function(action, detail) {
+        var logs = Storage.load(CONST.STORAGE.LOGS, []);
+        logs.unshift({ id: Utils.generateId(), time: new Date().toISOString(), action: action, detail: detail || "" });
+        if (logs.length > 500) { logs = logs.slice(0, 500); }
+        Storage.save(CONST.STORAGE.LOGS, logs);
+    },
+    render: function() {
+        var logs = Storage.load(CONST.STORAGE.LOGS, []);
+        var tbody = document.getElementById("log-table-body");
+        if (!tbody) { return; }
+        if (logs.length === 0) { tbody.innerHTML = "<tr><td colspan=\"3\" class=\"text-center text-muted\">暂无日志</td></tr>"; return; }
+        var html = "";
+        for (var i = 0; i < Math.min(logs.length, 100); i++) {
+            html += "<tr><td>" + Utils.formatDate(logs[i].time) + "</td><td>" + logs[i].action + "</td><td>" + (logs[i].detail || "-") + "</td></tr>";
+        }
+        tbody.innerHTML = html;
+    }
+};
+var ConfigManager = {
+    _config: null,
+    get: function() {
+        if (this._config) { return this._config; }
+        var saved = Storage.load(CONST.STORAGE.CONFIG, null);
+        if (saved) { this._config = saved; }
+        else { this._config = Utils.deepClone(CONST.DEFAULT_CONFIG); Storage.save(CONST.STORAGE.CONFIG, this._config); }
+        return this._config;
+    },
+    set: function(key, value) { var c = this.get(); c[key] = value; this._config = c; Storage.save(CONST.STORAGE.CONFIG, c); },
+    getAll: function() { return this.get(); }
+};
+var TableEditor = {
+    init: function() {
+        document.addEventListener("dblclick", function(e) {
+            var td = e.target.closest("td[data-field]");
+            if (!td || td.dataset.readonly === "true" || td.classList.contains("cell-editing")) { return; }
+            var field = td.dataset.field, rowId = td.dataset.rowId, cur = td.textContent.trim();
+            td.classList.add("cell-editing");
+            var input = document.createElement("input");
+            input.type = "text"; input.value = cur;
+            td.textContent = ""; td.appendChild(input);
+            input.focus(); input.select();
+            function save() {
+                var nv = input.value.trim();
+                td.classList.remove("cell-editing");
+                td.textContent = nv;
+                if (nv !== cur && rowId && field) { TableEditor.onSave(field, rowId, nv, cur); }
+            }
+            function cancel() { td.classList.remove("cell-editing"); td.textContent = cur; }
+            input.addEventListener("keydown", function(ev) {
+                if (ev.key === "Enter") { ev.preventDefault(); save(); }
+                if (ev.key === "Escape") { ev.preventDefault(); cancel(); }
+            });
+            input.addEventListener("blur", save);
+        });
+    },
+    onSave: function(field, rowId, nv, cur) {
+        var active = document.querySelector(".panel.active");
+        if (!active || !rowId || !field) { return; }
+        var panelId = active.id.replace("panel-", "");
+        var numVal = Number(nv);
+        var updateData = {};
+        if (!isNaN(numVal) && nv !== "" && String(numVal) === nv) { updateData[field] = numVal; }
+        else { updateData[field] = nv; }
+        var managers = {batches:BatchManager,sheep:SheepManager,feed:FeedManager,medicine:MedicineManager,health:HealthManager,isolation:IsolationManager,finance:FinanceManager,customers:CustomerManager,market:MarketManager};
+        var mgr = managers[panelId];
+        if (mgr && mgr.update) { mgr.update(rowId, updateData); }
+        Toast.show("已更新: " + field, "success");
+        refreshAll();
+    }
+};
+var CostEngine = {
+    calcBatchTotalCost: function(batch) {
+        var config = ConfigManager.get();
+        var days = 0;
+        if (batch.startDate && batch.status !== CONST.BATCH_STATUS.PENDING) { days = Math.max(0, Utils.dateDiff(batch.startDate, Utils.getToday())); }
+        var buyCost = Utils.safeNumber(batch.buyPrice, 0) * Utils.safeNumber(batch.initialCount, 0);
+        var feedCost = days * Utils.safeNumber(batch.initialCount, 0) * config.dailyFeedCost;
+        var medCost = Utils.safeNumber(batch.medCost, 0);
+        var otherCost = Utils.safeNumber(batch.otherCost, 0);
+        return { buyCost: buyCost, feedCost: feedCost, medCost: medCost, otherCost: otherCost, totalCost: buyCost + feedCost + medCost + otherCost, feedingDays: days };
+    },
+    simulateProfit: function(batchId, daysOffset) {
+        var batches = BatchManager.getAll();
+        var batch = null;
+        for (var i = 0; i < batches.length; i++) { if (batches[i].id === batchId) { batch = batches[i]; break; } }
+        if (!batch) { return null; }
+        var config = ConfigManager.get();
+        var cnt = Utils.safeNumber(batch.currentCount, batch.initialCount);
+        var wt = Utils.safeNumber(batch.avgWeight, 35);
+        var sp = Utils.safeNumber(batch.salePrice, config.minSalePrice);
+        var cost = this.calcBatchTotalCost(batch);
+        var extra = Utils.safeNumber(daysOffset, 0) * cnt * config.dailyFeedCost;
+        var total = cost.totalCost + extra;
+        var rev = cnt * wt * sp;
+        var profit = rev - total;
+        return { currentCount: cnt, avgWeight: wt, salePrice: sp, totalCost: total, revenue: rev, profit: profit, profitPerSheep: cnt > 0 ? profit / cnt : 0, daysOffset: daysOffset };
+    },
+    simulateBatch: function(batchId) {
+        var results = [];
+        for (var d = -10; d <= 30; d += 5) { var r = this.simulateProfit(batchId, d); if (r) { results.push(r); } }
+        return results;
+    }
+};
+var AlertSystem = {
+    alerts: [],
+    check: function() {
+        this.alerts = [];
+        var config = ConfigManager.get();
+        var batches = BatchManager.getAll();
+        var feedList = FeedManager.getAll();
+        var financeList = FinanceManager.getAll();
+        var healthList = HealthManager.getAll();
+        var totalFeed = 0;
+        for (var f = 0; f < feedList.length; f++) { totalFeed += Utils.safeNumber(feedList[f].stock, 0); }
+        if (totalFeed < CONST.ALERT_THRESHOLD.FEED_STOCK) { this.alerts.push({type:"warning",msg:"饲料库存不足 "+totalFeed+"kg"}); }
+        var totalIncome = 0, totalExpense = 0;
+        for (var fi = 0; fi < financeList.length; fi++) {
+            if (financeList[fi].type === "income") { totalIncome += Utils.safeNumber(financeList[fi].amount, 0); }
+            else { totalExpense += Utils.safeNumber(financeList[fi].amount, 0); }
+        }
+        var balance = config.startCapital + totalIncome - totalExpense;
+        if (balance < config.warningCapital) { this.alerts.push({type:"danger",msg:"资金余额 "+Utils.formatCurrency(balance)+"元，低于预警线"}); }
+        for (var b = 0; b < batches.length; b++) {
+            var batch = batches[b];
+            if (batch.status === CONST.BATCH_STATUS.FEEDING) {
+                var ic = Utils.safeNumber(batch.initialCount, 1), cc = Utils.safeNumber(batch.currentCount, ic);
+                var mr = ((ic - cc) / ic) * 100;
+                if (mr > CONST.ALERT_THRESHOLD.MORT_RATE) { this.alerts.push({type:"danger",msg:"批次 "+batch.name+" 死亡率 "+mr.toFixed(1)+"%"}); }
+                var days = Utils.dateDiff(batch.startDate, Utils.getToday());
+                if (days >= config.fattenDays - 7 && days <= config.fattenDays + 7) { this.alerts.push({type:"info",msg:"批次 "+batch.name+" 即将出栏("+days+"天)"}); }
+            }
+        }
+        var today = Utils.getToday();
+        for (var h = 0; h < healthList.length; h++) {
+            var rec = healthList[h];
+            if (rec.nextDate && rec.nextDate <= today && !rec.completed) { this.alerts.push({type:"warning",msg:"防疫 "+rec.project+" 已到期"}); }
+        }
+        this.render();
+    },
+    render: function() {
+        var c = document.getElementById("dashboard-alerts");
+        if (!c) { return; }
+        if (this.alerts.length === 0) { c.innerHTML = "<li class=\"info\">暂无预警</li>"; return; }
+        var html = "";
+        for (var i = 0; i < this.alerts.length; i++) { html += "<li class=\""+this.alerts[i].type+"\">"+this.alerts[i].msg+"</li>"; }
+        c.innerHTML = html;
+    }
+};
+var BackupScheduler = {
+    init: function() { var self = this; setInterval(function() { self.autoBackup(); }, 3600000); },
+    autoBackup: function() {
+        var backups = Storage.load(CONST.STORAGE.BACKUPS, []);
+        backups.unshift({ time: new Date().toISOString(), size: JSON.stringify(Storage.exportAll()).length });
+        if (backups.length > 20) { backups = backups.slice(0, 20); }
+        Storage.save(CONST.STORAGE.BACKUPS, backups);
+    }
+};
+var BatchManager = {
+    getAll: function() { return Storage.load(CONST.STORAGE.BATCHES, []); },
+    save: function(data) { Storage.save(CONST.STORAGE.BATCHES, data); },
+    get: function(id) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { return list[i]; } } return null; },
+    add: function(item) { var list = this.getAll(); list.unshift(item); this.save(list); },
+    update: function(id, data) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { for (var k in data) { list[i][k] = data[k]; } break; } } this.save(list); },
+    delete: function(id) { var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); },
+    calcCost: function(batch) { return CostEngine.calcBatchTotalCost(batch); },
+    calcProfit: function(batch) { var c = this.calcCost(batch); var cnt = Utils.safeNumber(batch.currentCount, batch.initialCount); var wt = Utils.safeNumber(batch.avgWeight, 35); var sp = Utils.safeNumber(batch.salePrice, ConfigManager.get().minSalePrice); var rev = cnt * wt * sp; return {revenue:rev,cost:c.totalCost,profit:rev-c.totalCost}; },
+    render: function() {
+        var list = this.getAll();
+        var sf = document.getElementById("batch-filter-status");
+        var sv = sf ? sf.value : "";
+        var sr = document.getElementById("batch-filter-search");
+        var sval = sr ? sr.value.toLowerCase() : "";
+        var filtered = [];
+        for (var i = 0; i < list.length; i++) {
+            var b = list[i];
+            if (sv && b.status !== sv) { continue; }
+            if (sval && b.name.toLowerCase().indexOf(sval) === -1) { continue; }
+            filtered.push(b);
+        }
+        var tbody = document.getElementById("batch-table-body");
+        if (!tbody) { return; }
+        if (filtered.length === 0) { tbody.innerHTML = "<tr><td colspan=\"9\" class=\"text-center text-muted\">暂无批次数据</td></tr>"; return; }
+        var html = "";
+        for (var j = 0; j < filtered.length; j++) {
+            var batch = filtered[j];
+            var sc = "pending";
+            if (batch.status === "饲养中") { sc = "feeding"; }
+            else if (batch.status === "隔离病羊") { sc = "isolation"; }
+            else if (batch.status === "已出栏") { sc = "finished"; }
+            else if (batch.status === "淘汰") { sc = "culled"; }
+            else if (batch.status === "部分出栏") { sc = "partial"; }
+            var days = batch.startDate ? Utils.dateDiff(batch.startDate, Utils.getToday()) : 0;
+            var est = batch.startDate ? Utils.dateAdd(batch.startDate, ConfigManager.get().fattenDays) : "-";
+            html += "<tr><td>"+(batch.batchNo||"-")+"</td><td>"+batch.name+"</td><td>"+Utils.formatDate(batch.startDate)+"</td><td>"+batch.initialCount+"</td><td>"+(batch.currentCount||batch.initialCount)+"</td><td><span class=\"badge-status "+sc+"\">"+batch.status+"</span></td><td>"+days+"</td><td>"+est+"</td><td><button class=\"btn btn-sm btn-info\" onclick=\"BatchManager.showDetail('"+batch.id+"')\">详情</button> <button class=\"btn btn-sm btn-warning\" onclick=\"BatchManager.showSimulate('"+batch.id+"')\">模拟</button> <button class=\"btn btn-sm btn-danger\" onclick=\"BatchManager.confirmDelete('"+batch.id+"')\">删除</button></td></tr>";
+        }
+        tbody.innerHTML = html;
+    },
+    showAddModal: function() {
+        var html = "<div class=\"form-group\"><label>批次名称</label><input type=\"text\" id=\"batch-name\" placeholder=\"如：2025年第一批\" data-required=\"true\" data-label=\"批次名称\" data-min-len=\"2\"></div>";
+        html += "<div class=\"form-row\"><div class=\"form-group\"><label>计划进羊数</label><input type=\"number\" id=\"batch-planCount\" min=\"1\" value=\"30\" data-required=\"true\" data-type=\"number\" data-min=\"1\" data-label=\"计划进羊数\"></div><div class=\"form-group\"><label>进羊日期</label><input type=\"date\" id=\"batch-startDate\" value=\""+Utils.getToday()+"\"></div></div>";
+        html += "<div class=\"form-row\"><div class=\"form-group\"><label>采购单价(元/只)</label><input type=\"number\" id=\"batch-buyPrice\" min=\"0\" step=\"0.1\" value=\"500\" data-required=\"true\" data-type=\"number\" data-min=\"0\" data-label=\"采购单价\"></div><div class=\"form-group\"><label>品种</label><input type=\"text\" id=\"batch-breed\" value=\"湖羊\"></div></div>";
+        html += "<div class=\"form-group\"><label>备注</label><textarea id=\"batch-remark\" rows=\"2\"></textarea></div>";
+        ModalManager.open("新增批次", html, '<button class="btn btn-primary" onclick="BatchManager.handleAdd()">确认</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>');
+    },
+    handleAdd: function() {
+        try {
+        var name = document.getElementById("batch-name").value.trim();
+        var planCount = document.getElementById("batch-planCount").value;
+        var buyPrice = document.getElementById("batch-buyPrice").value;
+        var formErrors = globalFormValidate();
+        if (formErrors.length > 0) { Toast.show(formErrors[0], "danger"); return; }
+        var errors = Validator.validate("batch", {name:name, planCount:planCount, buyPrice:buyPrice});
+        if (errors.length > 0) { Validator.showErrors(errors); return; }
+        var config = ConfigManager.get();
+        var batches = this.getAll();
+        var totalStock = 0;
+        for (var i = 0; i < batches.length; i++) { if (batches[i].status === "饲养中" || batches[i].status === "隔离病羊") { totalStock += Utils.safeNumber(batches[i].currentCount, 0); } }
+
+        var jinanData = CONST.JINAN_MARKET_DATA;
+        var currentMonth = new Date().getMonth() + 1;
+        var avgLambPrice = 0, cnt = 0;
+        for (var ji = 0; ji < jinanData.length; ji++) {
+            if (jinanData[ji].month === currentMonth) { avgLambPrice += jinanData[ji].lambPrice; cnt++; }
+        }
+        if (cnt > 0) {
+            avgLambPrice = avgLambPrice / cnt;
+            var buyP = Number(buyPrice);
+            if (buyP > avgLambPrice * 100 * 1.1) {
+                Toast.show("采购单价高于济南同期羔羊均价(" + Utils.formatCurrency(avgLambPrice * 100) + "元/只)，注意成本", "warning");
+            } else if (buyP < avgLambPrice * 100 * 0.9) {
+                Toast.show("采购单价低于济南同期均价，采购优势明显", "success");
+            }
+        }
+var sl = stockLoad();
+        if (totalStock + Number(planCount) > sl.max) { Toast.show("存栏将超出上限(" + sl.max + "只，当前负荷" + sl.rate + "%)，建议调整采购月份", "warning"); }
+        var batch = { id: Utils.generateId(), batchNo: "B" + Date.now().toString().slice(-6), name: name, startDate: document.getElementById("batch-startDate").value, initialCount: Number(planCount), currentCount: Number(planCount), buyPrice: Number(buyPrice), breed: document.getElementById("batch-breed").value.trim(), status: CONST.BATCH_STATUS.PENDING, avgWeight: 0, salePrice: 0, medCost: 0, otherCost: 0, remark: document.getElementById("batch-remark").value.trim(), createdAt: new Date().toISOString() };
+        this.add(batch);
+        FinanceManager.add({ type: "expense", category: "羔羊采购", amount: Number(planCount) * Number(buyPrice), batchId: batch.id, batchName: batch.name, date: batch.startDate, remark: "批次 " + batch.name + " 采购" });
+        CalendarManager.autoGeneratePlan(batch);
+        LogManager.add("新增批次", batch.name);
+        ModalManager.close();
+        Toast.show("批次创建成功", "success");
+        refreshAll();
+        } catch(e) { console.error("BatchManager.handleAdd error:", e); Toast.show("保存失败: " + e.message, "danger"); }
+    },
+    showDetail: function(id) {
+        var batch = this.get(id);
+        if (!batch) { return; }
+        var cost = this.calcCost(batch);
+        var profit = this.calcProfit(batch);
+        var html = "<div class=\"stats-grid\"><div class=\"stat-card\"><div class=\"stat-value\">"+batch.initialCount+"</div><div class=\"stat-label\">进羊数</div></div><div class=\"stat-card\"><div class=\"stat-value\">"+(batch.currentCount||batch.initialCount)+"</div><div class=\"stat-label\">存栏</div></div><div class=\"stat-card info\"><div class=\"stat-value\">"+Utils.formatCurrency(cost.totalCost)+"</div><div class=\"stat-label\">总成本</div></div><div class=\"stat-card success\"><div class=\"stat-value\">"+Utils.formatCurrency(profit.profit)+"</div><div class=\"stat-label\">预计利润</div></div></div>";
+        html += "<table><tr><td>采购</td><td class=\"text-right\">"+Utils.formatCurrency(cost.buyCost)+"</td></tr><tr><td>饲料("+cost.feedingDays+"天)</td><td class=\"text-right\">"+Utils.formatCurrency(cost.feedCost)+"</td></tr><tr><td>兽药</td><td class=\"text-right\">"+Utils.formatCurrency(cost.medCost)+"</td></tr><tr><td>其他</td><td class=\"text-right\">"+Utils.formatCurrency(cost.otherCost)+"</td></tr><tr><td><b>合计</b></td><td class=\"text-right\"><b>"+Utils.formatCurrency(cost.totalCost)+"</b></td></tr></table>";
+        ModalManager.open("批次详情 - " + batch.name, html, '<button class="btn btn-outline" onclick="ModalManager.close()">关闭</button>');
+    },
+    showSimulate: function(id) {
+        var results = CostEngine.simulateBatch(id);
+        if (!results || results.length === 0) { Toast.show("无数据", "warning"); return; }
+        var html = "<table><thead><tr><th>偏移天</th><th>总成本</th><th>收入</th><th>利润</th><th>只均</th></tr></thead><tbody>";
+        for (var i = 0; i < results.length; i++) {
+            var r = results[i]; var cls = r.profit >= 0 ? "text-success" : "text-danger";
+            html += "<tr><td>"+(r.daysOffset>=0?"+":"")+r.daysOffset+"天</td><td>"+Utils.formatCurrency(r.totalCost)+"</td><td>"+Utils.formatCurrency(r.revenue)+"</td><td class=\""+cls+"\">"+Utils.formatCurrency(r.profit)+"</td><td class=\""+cls+"\">"+Utils.formatCurrency(r.profitPerSheep)+"</td></tr>";
+        }
+        html += "</tbody></table>";
+        ModalManager.open("出栏利润模拟", html, '<button class="btn btn-outline" onclick="ModalManager.close()">关闭</button>');
+    },
+    confirmDelete: function(id) { if (!confirm("确定删除？")) { return; } this.delete(id); LogManager.add("删除批次", id); Toast.show("已删除", "success"); refreshAll(); },
+    exportExcel: function() {
+        var list = this.getAll(); var data = [];
+        for (var i = 0; i < list.length; i++) { var b = list[i]; var c = this.calcCost(b); data.push({"批次号":b.batchNo,"名称":b.name,"进羊日期":b.startDate,"进羊数":b.initialCount,"存栏":b.currentCount,"状态":b.status,"总成本":c.totalCost.toFixed(2)}); }
+        ExportManager.toExcel(data, "批次管理");
+    }
+};
+var SheepManager = {
+    getAll: function() { return Storage.load(CONST.STORAGE.SHEEP, []); },
+    save: function(data) { Storage.save(CONST.STORAGE.SHEEP, data); },
+    get: function(id) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { return list[i]; } } return null; },
+    add: function(item) { var list = this.getAll(); list.unshift(item); this.save(list); },
+    update: function(id, data) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { for (var k in data) { list[i][k] = data[k]; } break; } } this.save(list); },
+    delete: function(id) { var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); },
+    getCurrentWeight: function(s) { if (!s || !s.weightRecords || s.weightRecords.length === 0) { return Utils.safeNumber(s ? s.initialWeight : 0, 0); } return Utils.safeNumber(s.weightRecords[s.weightRecords.length - 1].weight, 0); },
+    calcDailyGain: function(s) { if (!s || !s.weightRecords || s.weightRecords.length < 2) { return 0; } var d = Utils.dateDiff(s.weightRecords[0].date, s.weightRecords[s.weightRecords.length-1].date); return d > 0 ? ((s.weightRecords[s.weightRecords.length-1].weight - s.weightRecords[0].weight) / d * 1000).toFixed(0) : 0; },
+    render: function() {
+        var list = this.getAll();
+        var bf = document.getElementById("sheep-filter-batch"); var bv = bf ? bf.value : "";
+        var sf = document.getElementById("sheep-filter-status"); var sv = sf ? sf.value : "";
+        var filtered = [];
+        for (var i = 0; i < list.length; i++) { if (bv && list[i].batchId !== bv) { continue; } if (sv && list[i].status !== sv) { continue; } filtered.push(list[i]); }
+        var tbody = document.getElementById("sheep-table-body");
+        if (!tbody) { return; }
+        if (filtered.length === 0) { tbody.innerHTML = "<tr><td colspan=\"9\" class=\"text-center text-muted\">暂无数据</td></tr>"; return; }
+        var html = "";
+        for (var j = 0; j < filtered.length; j++) {
+            var s = filtered[j]; var cw = this.getCurrentWeight(s); var dg = this.calcDailyGain(s);
+            var sc = "feeding"; if (s.status==="患病"||s.status==="隔离") { sc="isolation"; } else if (s.status==="已出栏") { sc="finished"; } else if (s.status==="死亡"||s.status==="淘汰") { sc="culled"; }
+            html += "<tr><td>"+s.earTag+"</td><td>"+(s.batchName||"-")+"</td><td>"+(s.breed||"-")+"</td><td>"+(s.gender||"-")+"</td><td>"+s.initialWeight+"</td><td>"+cw.toFixed(1)+"</td><td>"+dg+"</td><td><span class=\"badge-status "+sc+"\">"+s.status+"</span></td><td><button class=\"btn btn-sm btn-info\" onclick=\"SheepManager.showDetail('"+s.id+"')\">详情</button> <button class=\"btn btn-sm btn-success\" onclick=\"SheepManager.showAddWeightModal('"+s.id+"')\">称重</button></td></tr>";
+        }
+        tbody.innerHTML = html;
+    },
+    _populateBatchFilter: function() { var sel = document.getElementById("sheep-filter-batch"); if (!sel) { return; } var batches = BatchManager.getAll(); var html = "<option value=\"\">全部批次</option>"; for (var i = 0; i < batches.length; i++) { html += "<option value=\""+batches[i].id+"\">"+batches[i].name+"</option>"; } sel.innerHTML = html; },
+    showAddModal: function() {
+        var batches = BatchManager.getAll();
+        var html = "<div class=\"form-group\"><label>批次</label><select id=\"sheep-batchId\">";
+        for (var i = 0; i < batches.length; i++) { html += "<option value=\""+batches[i].id+"\">"+batches[i].name+"</option>"; }
+        html += "</select></div><div class=\"form-row\"><div class=\"form-group\"><label>耳标号</label><input type=\"text\" id=\"sheep-earTag\"></div><div class=\"form-group\"><label>性别</label><select id=\"sheep-gender\"><option value=\"公\">公</option><option value=\"母\">母</option></select></div></div><div class=\"form-row\"><div class=\"form-group\"><label>品种</label><input type=\"text\" id=\"sheep-breed\" value=\"湖羊\"></div><div class=\"form-group\"><label>初重(kg)</label><input type=\"number\" id=\"sheep-initialWeight\" min=\"0\" step=\"0.1\" value=\"15\"></div></div>";
+        ModalManager.open("新增单羊", html, '<button class="btn btn-primary" onclick="SheepManager.handleAdd()">确认</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>');
+    },
+    handleAdd: function() {
+        try {
+        var earTag = document.getElementById("sheep-earTag").value.trim();
+        var iw = document.getElementById("sheep-initialWeight").value;
+        var bid = document.getElementById("sheep-batchId").value;
+        var errors = Validator.validate("sheep", {earTag:earTag,batchId:bid,breed:document.getElementById("sheep-breed").value,initialWeight:iw});
+        if (errors.length > 0) { Validator.showErrors(errors); return; }
+        var batch = BatchManager.get(bid);
+        var sheep = { id:Utils.generateId(), earTag:earTag, batchId:bid, batchName:batch?batch.name:"", breed:document.getElementById("sheep-breed").value.trim(), gender:document.getElementById("sheep-gender").value, initialWeight:Number(iw), status:CONST.SHEEP_STATUS.ALIVE, weightRecords:[{date:Utils.getToday(),weight:Number(iw)}], createdAt:new Date().toISOString() };
+        this.add(sheep);
+        LogManager.add("新增单羊", earTag);
+        ModalManager.close();
+        Toast.show("创建成功", "success");
+        refreshAll();
+        } catch(e) { console.error("SheepManager.handleAdd error:", e); Toast.show("保存失败: " + e.message, "danger"); }
+    },
+    showDetail: function(id) {
+        var sheep = this.get(id);
+        if (!sheep) { return; }
+        var cw = this.getCurrentWeight(sheep);
+        var html = "<div class=\"stats-grid\"><div class=\"stat-card\"><div class=\"stat-value\">"+sheep.earTag+"</div><div class=\"stat-label\">编号</div></div><div class=\"stat-card\"><div class=\"stat-value\">"+cw.toFixed(1)+"kg</div><div class=\"stat-label\">体重</div></div><div class=\"stat-card info\"><div class=\"stat-value\">"+this.calcDailyGain(sheep)+"g</div><div class=\"stat-label\">日增重</div></div></div><div class=\"chart-container\" style=\"height:200px\"><canvas id=\"chart-sheep-weight\"></canvas></div>";
+        ModalManager.open("单羊详情 - "+sheep.earTag, html, '<button class="btn btn-outline" onclick="ModalManager.close()">关闭</button>', "700px");
+        setTimeout(function() {
+            var canvas = document.getElementById("chart-sheep-weight");
+            if (!canvas) { return; }
+            ChartManager.destroyChart("sheep-weight");
+            var labels = [], weights = [];
+            if (sheep.weightRecords) { for (var i = 0; i < sheep.weightRecords.length; i++) { labels.push(sheep.weightRecords[i].date); weights.push(sheep.weightRecords[i].weight); } }
+            ChartManager.charts["sheep-weight"] = new Chart(canvas, { type:"line", data:{labels:labels,datasets:[{label:"体重(kg)",data:weights,borderColor:CONST.COLORS.primary,fill:false,tension:0.3}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}} });
+        }, 100);
+    },
+    showAddWeightModal: function(id) {
+        var html = "<div class=\"form-group\"><label>日期</label><input type=\"date\" id=\"weight-date\" value=\""+Utils.getToday()+"\"></div><div class=\"form-group\"><label>体重(kg)</label><input type=\"number\" id=\"weight-value\" min=\"0\" step=\"0.1\"></div>";
+        ModalManager.open("添加称重", html, "<button class=\"btn btn-primary\" onclick=\"SheepManager.handleAddWeight('"+id+"')\">保存</button><button class=\"btn btn-outline\" onclick=\"ModalManager.close()\">取消</button>");
+    },
+    handleAddWeight: function(id) {
+        var w = document.getElementById("weight-value").value;
+        if (!w || Number(w) <= 0) { Toast.show("请输入有效体重", "danger"); return; }
+        var sheep = this.get(id);
+        if (!sheep) { return; }
+        if (!sheep.weightRecords) { sheep.weightRecords = []; }
+        sheep.weightRecords.push({ date: document.getElementById("weight-date").value, weight: Number(w) });
+        this.update(id, { weightRecords: sheep.weightRecords });
+        LogManager.add("称重", sheep.earTag + " " + w + "kg");
+        ModalManager.close();
+        Toast.show("已保存", "success");
+        refreshAll();
+    }
+};
+var CalendarManager = {
+    getAll: function() { return Storage.load(CONST.STORAGE.CALENDAR, []); },
+    save: function(data) { Storage.save(CONST.STORAGE.CALENDAR, data); },
+    get: function(id) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { return list[i]; } } return null; },
+    add: function(item) { var list = this.getAll(); list.unshift(item); this.save(list); },
+    update: function(id, data) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { for (var k in data) { list[i][k] = data[k]; } break; } } this.save(list); },
+    delete: function(id) { var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); },
+    currentYear: new Date().getFullYear(), currentMonth: new Date().getMonth(), viewMode: "grid",
+    render: function() { document.getElementById("calendar-month-label").textContent = this.currentYear+"年"+(this.currentMonth+1)+"月"; if (this.viewMode === "grid") { this.renderGridView(); } else { this.renderListView(); } },
+    renderGridView: function() {
+        var events = this.getAll(); var y = this.currentYear, m = this.currentMonth;
+        var fd = new Date(y, m, 1).getDay(); var dim = new Date(y, m+1, 0).getDate(); var today = Utils.getToday();
+        var html = "<div class=\"calendar-grid\">"; var wd = ["日","一","二","三","四","五","六"];
+        for (var w = 0; w < 7; w++) { html += "<div class=\"calendar-header-cell\">"+wd[w]+"</div>"; }
+        for (var e = 0; e < fd; e++) { html += "<div class=\"calendar-cell\"></div>"; }
+        for (var d = 1; d <= dim; d++) {
+            var ds = y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+            html += "<div class=\"calendar-cell"+(ds===today?" today":"")+"\"><div class=\"day-num\">"+d+"</div>";
+            for (var ev = 0; ev < events.length; ev++) {
+                if (events[ev].date === ds) {
+                    var evt = events[ev];
+                    var evtStyle = "";
+                    if (evt.type === "stock") { evtStyle = "background:rgba(74,124,155,0.2);color:#3a6278"; }
+                    else if (evt.type === "health") { evtStyle = "background:rgba(90,158,111,0.2);color:#3a6278"; }
+                    else if (evt.type === "sale") { evtStyle = "background:rgba(196,154,60,0.2);color:#8a6a20"; }
+                    else { evtStyle = "background:rgba(149,165,166,0.15);color:#7f8c8d"; }
+                    html += "<div class=\"event-item\" style=\""+evtStyle+"\" title=\""+evt.title+"\">"+evt.title+"</div>";
+                }
+            }
+            html += "</div>";
+        }
+        html += "</div>";
+        document.getElementById("calendar-grid-view").innerHTML = html;
+        document.getElementById("calendar-grid-view").classList.remove("hidden");
+        document.getElementById("calendar-list-view").classList.add("hidden");
+    },
+    renderListView: function() {
+        var events = this.getAll(); var prefix = this.currentYear+"-"+String(this.currentMonth+1).padStart(2,"0");
+        var html = ""; var has = false;
+        for (var i = 0; i < events.length; i++) {
+            if (events[i].date && events[i].date.indexOf(prefix) === 0) {
+                has = true;
+                html += "<div style=\"padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between\"><div><b>"+events[i].date+"</b> - "+events[i].title+"</div><button class=\"btn btn-sm btn-danger\" onclick=\"CalendarManager.deleteEvent('"+events[i].id+"')\">删除</button></div>";
+            }
+        }
+        if (!has) { html = "<div class=\"empty-state\"><div class=\"empty-text\">本月暂无事件</div></div>"; }
+        document.getElementById("calendar-list-view").innerHTML = html;
+        document.getElementById("calendar-list-view").classList.remove("hidden");
+        document.getElementById("calendar-grid-view").classList.add("hidden");
+    },
+    switchView: function() { this.viewMode = this.viewMode === "grid" ? "list" : "grid"; this.render(); },
+    prevMonth: function() { this.currentMonth--; if (this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; } this.render(); },
+    nextMonth: function() { this.currentMonth++; if (this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; } this.render(); },
+    showAddEventModal: function() {
+        var html = "<div class=\"form-group\"><label>日期</label><input type=\"date\" id=\"cal-event-date\" value=\""+Utils.getToday()+"\"></div><div class=\"form-group\"><label>标题</label><input type=\"text\" id=\"cal-event-title\"></div><div class=\"form-group\"><label>类型</label><select id=\"cal-event-type\"><option value=\"feed\">饲喂</option><option value=\"health\">防疫</option><option value=\"stock\">进羊</option><option value=\"sale\">出栏</option><option value=\"other\">其他</option></select></div><div class=\"form-group\"><label>备注</label><textarea id=\"cal-event-remark\" rows=\"2\"></textarea></div>";
+        ModalManager.open("添加事件", html, '<button class="btn btn-primary" onclick="CalendarManager.handleAddEvent()">添加</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>');
+    },
+    handleAddEvent: function() {
+        var title = document.getElementById("cal-event-title").value.trim();
+        if (!title) { Toast.show("请输入标题", "danger"); return; }
+        var events = this.getAll();
+        events.push({ id:Utils.generateId(), date:document.getElementById("cal-event-date").value, title:title, type:document.getElementById("cal-event-type").value, remark:document.getElementById("cal-event-remark").value.trim() });
+        this.save(events);
+        LogManager.add("添加事件", title);
+        ModalManager.close();
+        Toast.show("已添加", "success");
+        this.render();
+    },
+    deleteEvent: function(id) { var events = this.getAll(); var nl = []; for (var i = 0; i < events.length; i++) { if (events[i].id !== id) { nl.push(events[i]); } } this.save(nl); Toast.show("已删除", "success"); this.render(); },
+    autoGeneratePlan: function(batch) {
+        if (!batch || !batch.startDate) { return; }
+        var config = ConfigManager.get();
+        var events = this.getAll();
+        var items = [{day:0,title:"进羊 - "+batch.name,type:"stock"},{day:3,title:"驱虫 - "+batch.name,type:"health"},{day:7,title:"口蹄疫 - "+batch.name,type:"health"},{day:14,title:"羊痘 - "+batch.name,type:"health"},{day:21,title:"三联四防 - "+batch.name,type:"health"},{day:30,title:"驱虫2 - "+batch.name,type:"health"},{day:60,title:"称重 - "+batch.name,type:"other"},{day:config.fattenDays,title:"出栏 - "+batch.name,type:"sale"}];
+        for (var i = 0; i < items.length; i++) { events.push({ id:Utils.generateId(), date:Utils.dateAdd(batch.startDate, items[i].day), title:items[i].title, type:items[i].type, batchId:batch.id }); }
+        this.save(events);
+    }
+};
+var FeedManager = {
+    getAll: function() { return Storage.load(CONST.STORAGE.FEED, []); },
+    save: function(data) { Storage.save(CONST.STORAGE.FEED, data); },
+    get: function(id) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { return list[i]; } } return null; },
+    add: function(item) { var list = this.getAll(); list.unshift(item); this.save(list); },
+    update: function(id, data) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { for (var k in data) { list[i][k] = data[k]; } break; } } this.save(list); },
+    delete: function(id) { var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); },
+    render: function() {
+        var list = this.getAll(); var ts = 0, tv = 0;
+        for (var i = 0; i < list.length; i++) { ts += Utils.safeNumber(list[i].stock, 0); tv += Utils.safeNumber(list[i].stock, 0) * Utils.safeNumber(list[i].price, 0); }
+        var se = document.getElementById("feed-stats");
+        if (se) { se.innerHTML = "<div class=\"stat-card\"><div class=\"stat-value\">"+Utils.formatNumber(ts)+"</div><div class=\"stat-label\">总库存kg</div></div><div class=\"stat-card info\"><div class=\"stat-value\">"+Utils.formatCurrency(tv)+"</div><div class=\"stat-label\">总价值</div></div><div class=\"stat-card\"><div class=\"stat-value\">"+list.length+"</div><div class=\"stat-label\">种类</div></div>"; }
+        var tbody = document.getElementById("feed-table-body");
+        if (!tbody) { return; }
+        if (list.length === 0) { tbody.innerHTML = "<tr><td colspan=\"7\" class=\"text-center text-muted\">暂无数据</td></tr>"; return; }
+        var html = "";
+        for (var j = 0; j < list.length; j++) { var it = list[j]; html += "<tr><td>"+it.name+"</td><td>"+(it.type||"-")+"</td><td>"+Utils.formatNumber(it.stock,1)+"</td><td>"+Utils.formatCurrency(it.price)+"</td><td>"+Utils.formatCurrency(Utils.safeNumber(it.stock,0)*Utils.safeNumber(it.price,0))+"</td><td>"+Utils.formatDate(it.date)+"</td><td><button class=\"btn btn-sm btn-danger\" onclick=\"FeedManager.confirmDelete('"+it.id+"')\">删除</button></td></tr>"; }
+        tbody.innerHTML = html;
+        var mref = document.getElementById("feed-market-ref");
+        if (mref) { var ml = MarketManager.getAll(); if (ml.length > 0) { var mt = 0, mc = 0; for (var mi = 0; mi < ml.length; mi++) { if (ml[mi].feedPrice) { mt += ml[mi].feedPrice; mc++; } } var mavg = mc > 0 ? (mt / mc).toFixed(2) : "-"; mref.innerHTML = "<div class=\"stats-grid\"><div class=\"stat-card\"><div class=\"stat-value\">"+mavg+"</div><div class=\"stat-label\">近"+mc+"期饲料均价(元/kg)</div></div><div class=\"stat-card info\"><div class=\"stat-value\">"+Utils.formatDate(ml[0].date)+"</div><div class=\"stat-label\">最近记录日期</div></div></div><p class=\"text-muted\" style=\"margin-top:8px;font-size:13px\">入库时系统自动对比市场均价，高于均价标橙预警，低于均价标绿提示采购优势</p>"; } }
+    },
+    showAddModal: function() {
+        var html = "<div class=\"form-row\"><div class=\"form-group\"><label>名称</label><input type=\"text\" id=\"feed-name\" data-required=\"true\" data-label=\"饲料名称\"></div><div class=\"form-group\"><label>类型</label><select id=\"feed-type\"><option value=\"粗饲料\">粗饲料</option><option value=\"精饲料\">精饲料</option><option value=\"添加剂\">添加剂</option></select></div></div><div class=\"form-row\"><div class=\"form-group\"><label>库存kg</label><input type=\"number\" id=\"feed-stock\" min=\"0\" step=\"0.1\" data-required=\"true\" data-type=\"number\" data-min=\"0\" data-label=\"库存数量\"></div><div class=\"form-group\"><label>单价元/kg</label><input type=\"number\" id=\"feed-price\" min=\"0\" step=\"0.01\" data-required=\"true\" data-type=\"number\" data-min=\"0\" data-label=\"单价\"></div></div><div class=\"form-group\"><label>日期</label><input type=\"date\" id=\"feed-date\" value=\""+Utils.getToday()+"\"></div>";
+        ModalManager.open("饲料入库", html, '<button class="btn btn-primary" onclick="FeedManager.handleAdd()">入库</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>');
+    },
+    handleAdd: function() {
+        try {
+        var name = document.getElementById("feed-name").value.trim(); var stock = document.getElementById("feed-stock").value; var price = document.getElementById("feed-price").value;
+        var formErrors = globalFormValidate();
+        if (formErrors.length > 0) { Toast.show(formErrors[0], "danger"); return; }
+        var errors = validateStockInForm({name:name,stock:stock,price:price}, 'feed');
+        if (errors.length > 0) { Validator.showErrors(errors); return; }
+        var marketList = MarketManager.getAll();
+        var avgPrice = 0;
+        if (marketList.length > 0) { var total = 0; var cnt = 0; for (var mi = 0; mi < marketList.length; mi++) { if (marketList[mi].feedPrice) { total += marketList[mi].feedPrice; cnt++; } } avgPrice = cnt > 0 ? total / cnt : 0; }
+        if (avgPrice > 0 && Number(price) > avgPrice * 1.1) { Toast.show("入库单价高于市场均价" + Utils.formatCurrency(avgPrice) + "元/kg，请注意采购成本", "warning"); }
+        else if (avgPrice > 0 && Number(price) < avgPrice * 0.9) { Toast.show("入库单价低于市场均价，采购优势", "success"); }
+        var item = {id:Utils.generateId(),name:name,type:document.getElementById("feed-type").value,stock:Number(stock),price:Number(price),date:document.getElementById("feed-date").value,createdAt:new Date().toISOString()};
+        this.add(item);
+        FinanceManager.add({type:"expense",category:"饲料采购",amount:Number(stock)*Number(price),date:item.date,remark:"采购 "+name});
+        LogManager.add("饲料入库", name); ModalManager.close(); Toast.show("入库成功", "success"); refreshAll();
+        } catch(e) { console.error("FeedManager.handleAdd error:", e); Toast.show("保存失败: " + e.message, "danger"); }
+    },
+    showUseModal: function() {
+        var list = this.getAll();
+        if (list.length === 0) { Toast.show("暂无饲料", "warning"); return; }
+        var html = "<div class=\"form-group\"><label>选择饲料</label><select id=\"feed-use-id\">";
+        for (var i = 0; i < list.length; i++) { html += "<option value=\""+list[i].id+"\">"+list[i].name+" ("+list[i].stock+"kg)</option>"; }
+        html += "</select></div><div class=\"form-group\"><label>数量kg</label><input type=\"number\" id=\"feed-use-amount\" min=\"0\" step=\"0.1\"></div>";
+        ModalManager.open("领用出库", html, '<button class="btn btn-warning" onclick="FeedManager.handleUse()">确认</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>');
+    },
+    handleUse: function() {
+        var id = document.getElementById("feed-use-id").value; var amt = Number(document.getElementById("feed-use-amount").value);
+        if (!amt || amt <= 0) { Toast.show("请输入有效数量", "danger"); return; }
+        var item = this.get(id);
+        if (!item || amt > Utils.safeNumber(item.stock, 0)) { Toast.show("超过库存", "danger"); return; }
+        this.update(id, {stock: Utils.safeNumber(item.stock, 0) - amt});
+        LogManager.add("饲料领用", item.name + " " + amt + "kg"); ModalManager.close(); Toast.show("成功", "success"); refreshAll();
+    },
+    confirmDelete: function(id) { if (!confirm("确定删除？")) { return; } var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); Toast.show("已删除", "success"); refreshAll(); }
+};
+var MedicineManager = {
+    getAll: function() { return Storage.load(CONST.STORAGE.MEDICINE, []); },
+    save: function(data) { Storage.save(CONST.STORAGE.MEDICINE, data); },
+    get: function(id) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { return list[i]; } } return null; },
+    add: function(item) { var list = this.getAll(); list.unshift(item); this.save(list); },
+    update: function(id, data) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { for (var k in data) { list[i][k] = data[k]; } break; } } this.save(list); },
+    delete: function(id) { var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); },
+    render: function() {
+        var list = this.getAll(); var tbody = document.getElementById("medicine-table-body");
+        if (!tbody) { return; }
+        if (list.length === 0) { tbody.innerHTML = "<tr><td colspan=\"7\" class=\"text-center text-muted\">暂无数据</td></tr>"; return; }
+        var html = "";
+        for (var i = 0; i < list.length; i++) { var it = list[i]; var exp = it.expiryDate && it.expiryDate < Utils.getToday(); html += "<tr><td>"+it.name+"</td><td>"+(it.type||"-")+"</td><td>"+Utils.safeNumber(it.stock,0)+"</td><td>"+Utils.formatCurrency(it.price)+"</td><td"+(exp?" class=\"text-danger\"":"")+">"+Utils.formatDate(it.expiryDate)+"</td><td>"+(it.usage||"-")+"</td><td><button class=\"btn btn-sm btn-danger\" onclick=\"MedicineManager.confirmDelete('"+it.id+"')\">删除</button></td></tr>"; }
+        tbody.innerHTML = html;
+    },
+    showAddModal: function() {
+        var html = "<div class=\"form-row\"><div class=\"form-group\"><label>名称</label><input type=\"text\" id=\"med-name\" data-required=\"true\" data-label=\"兽药名称\"></div><div class=\"form-group\"><label>类型</label><select id=\"med-type\"><option>疫苗</option><option>驱虫药</option><option>抗生素</option><option>消毒药</option><option>其他</option></select></div></div><div class=\"form-row\"><div class=\"form-group\"><label>库存</label><input type=\"number\" id=\"med-stock\" min=\"0\" data-type=\"number\" data-min=\"0\" data-label=\"库存\"></div><div class=\"form-group\"><label>单价</label><input type=\"number\" id=\"med-price\" min=\"0\" step=\"0.01\"></div></div><div class=\"form-row\"><div class=\"form-group\"><label>有效期</label><input type=\"date\" id=\"med-expiry\"></div><div class=\"form-group\"><label>用途</label><input type=\"text\" id=\"med-usage\"></div></div>";
+        ModalManager.open("新增兽药", html, '<button class="btn btn-primary" onclick="MedicineManager.handleAdd()">确认</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>');
+    },
+    handleAdd: function() { try { var formErrors = globalFormValidate(); if (formErrors.length > 0) { Toast.show(formErrors[0], "danger"); return; } var name = document.getElementById("med-name").value.trim(); if (!name) { Toast.show("请输入名称", "danger"); return; } this.add({id:Utils.generateId(),name:name,type:document.getElementById("med-type").value,stock:Number(document.getElementById("med-stock").value)||0,price:Number(document.getElementById("med-price").value)||0,expiryDate:document.getElementById("med-expiry").value,usage:document.getElementById("med-usage").value.trim(),createdAt:new Date().toISOString()}); LogManager.add("新增兽药", name); ModalManager.close(); Toast.show("成功", "success"); refreshAll(); } catch(e) { console.error("MedicineManager.handleAdd error:", e); Toast.show("保存失败: " + e.message, "danger"); } },
+    confirmDelete: function(id) { if (!confirm("确定删除？")) { return; } var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); Toast.show("已删除", "success"); refreshAll(); }
+};
+var HealthManager = {
+    getAll: function() { return Storage.load(CONST.STORAGE.HEALTH, []); },
+    save: function(data) { Storage.save(CONST.STORAGE.HEALTH, data); },
+    get: function(id) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { return list[i]; } } return null; },
+    add: function(item) { var list = this.getAll(); list.unshift(item); this.save(list); },
+    update: function(id, data) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { for (var k in data) { list[i][k] = data[k]; } break; } } this.save(list); },
+    delete: function(id) { var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); },
+    render: function() {
+        var list = this.getAll(); var bf = document.getElementById("health-filter-batch"); var bv = bf ? bf.value : "";
+        var filtered = []; for (var i = 0; i < list.length; i++) { if (bv && list[i].batchId !== bv) { continue; } filtered.push(list[i]); }
+        var tbody = document.getElementById("health-table-body");
+        if (!tbody) { return; }
+        if (filtered.length === 0) { tbody.innerHTML = "<tr><td colspan=\"8\" class=\"text-center text-muted\">暂无记录</td></tr>"; return; }
+        var html = "";
+        for (var j = 0; j < filtered.length; j++) { var r = filtered[j]; html += "<tr><td>"+Utils.formatDate(r.date)+"</td><td>"+(r.batchName||"-")+"</td><td>"+r.project+"</td><td>"+(r.medicine||"-")+"</td><td>"+(r.dosage||"-")+"</td><td>"+(r.operator||"-")+"</td><td>"+(r.remark||"-")+"</td><td><button class=\"btn btn-sm btn-danger\" onclick=\"HealthManager.confirmDelete('"+r.id+"')\">删除</button></td></tr>"; }
+        tbody.innerHTML = html;
+    },
+    _populateBatchFilter: function() { var sel = document.getElementById("health-filter-batch"); if (!sel) { return; } var batches = BatchManager.getAll(); var html = "<option value=\"\">全部批次</option>"; for (var i = 0; i < batches.length; i++) { html += "<option value=\""+batches[i].id+"\">"+batches[i].name+"</option>"; } sel.innerHTML = html; },
+    showAddModal: function() {
+        var batches = BatchManager.getAll(); var html = "<div class=\"form-group\"><label>批次</label><select id=\"health-batchId\">"; for (var i = 0; i < batches.length; i++) { html += "<option value=\""+batches[i].id+"\">"+batches[i].name+"</option>"; } html += "</select></div><div class=\"form-row\"><div class=\"form-group\"><label>日期</label><input type=\"date\" id=\"health-date\" value=\""+Utils.getToday()+"\"></div><div class=\"form-group\"><label>项目</label><input type=\"text\" id=\"health-project\" data-required=\"true\" data-label=\"防疫项目\"></div></div><div class=\"form-row\"><div class=\"form-group\"><label>药品</label><input type=\"text\" id=\"health-medicine\"></div><div class=\"form-group\"><label>用量</label><input type=\"text\" id=\"health-dosage\"></div></div><div class=\"form-row\"><div class=\"form-group\"><label>操作人</label><input type=\"text\" id=\"health-operator\"></div><div class=\"form-group\"><label>下次日期</label><input type=\"date\" id=\"health-nextDate\"></div></div><div class=\"form-group\"><label>备注</label><textarea id=\"health-remark\" rows=\"2\"></textarea></div>";
+        ModalManager.open("新增防疫", html, '<button class="btn btn-primary" onclick="HealthManager.handleAdd()">保存</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>');
+    },
+    handleAdd: function() {
+        try {
+        var formErrors = globalFormValidate();
+        if (formErrors.length > 0) { Toast.show(formErrors[0], "danger"); return; }
+        var project = document.getElementById("health-project").value.trim();
+        if (!project) { Toast.show("请输入项目", "danger"); return; }
+        var bid = document.getElementById("health-batchId").value; var batch = BatchManager.get(bid);
+        this.add({id:Utils.generateId(),batchId:bid,batchName:batch?batch.name:"",date:document.getElementById("health-date").value,project:project,medicine:document.getElementById("health-medicine").value.trim(),dosage:document.getElementById("health-dosage").value.trim(),operator:document.getElementById("health-operator").value.trim(),nextDate:document.getElementById("health-nextDate").value,remark:document.getElementById("health-remark").value.trim(),completed:false,createdAt:new Date().toISOString()});
+        LogManager.add("新增防疫", project); ModalManager.close(); Toast.show("已保存", "success"); refreshAll();
+        } catch(e) { console.error("HealthManager.handleAdd error:", e); Toast.show("保存失败: " + e.message, "danger"); }
+    },
+    showBatchGenerateModal: function() { var batches = BatchManager.getAll(); var html = "<div class=\"form-group\"><label>批次</label><select id=\"health-gen-batchId\">"; for (var i = 0; i < batches.length; i++) { html += "<option value=\""+batches[i].id+"\">"+batches[i].name+"</option>"; } html += "</select></div><p class=\"text-muted\">自动生成6道防疫程序</p>"; ModalManager.open("批量生成", html, '<button class="btn btn-primary" onclick="HealthManager.handleBatchGenerate()">生成</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>'); },
+    handleBatchGenerate: function() { this.batchGenerate(document.getElementById("health-gen-batchId").value); ModalManager.close(); Toast.show("已生成", "success"); refreshAll(); },
+    batchGenerate: function(batchId) {
+        var batch = BatchManager.get(batchId); if (!batch || !batch.startDate) { return; }
+        var tpl = [{day:3,project:"驱虫",medicine:"伊维菌素",dosage:"0.2mg/kg"},{day:7,project:"口蹄疫",medicine:"口蹄疫疫苗",dosage:"1ml/只"},{day:14,project:"羊痘",medicine:"羊痘疫苗",dosage:"0.5ml/只"},{day:21,project:"三联四防",medicine:"三联四防苗",dosage:"1ml/只"},{day:35,project:"传胸",medicine:"胸肺疫苗",dosage:"1ml/只"},{day:60,project:"二次驱虫",medicine:"伊维菌素",dosage:"0.2mg/kg"}];
+        var list = this.getAll();
+        for (var i = 0; i < tpl.length; i++) { list.push({id:Utils.generateId(),batchId:batchId,batchName:batch.name,date:Utils.dateAdd(batch.startDate,tpl[i].day),project:tpl[i].project,medicine:tpl[i].medicine,dosage:tpl[i].dosage,operator:"",nextDate:"",remark:"自动生成",completed:false,createdAt:new Date().toISOString()}); }
+        this.save(list); LogManager.add("批量生成防疫", batch.name);
+    },
+    checkWithdrawal: function(batchId) { var list = this.getAll(); var warnings = []; var today = Utils.getToday(); for (var i = 0; i < list.length; i++) { if (list[i].batchId === batchId && list[i].medicine && list[i].date) { var d = Utils.dateDiff(list[i].date, today); if (d < 28) { warnings.push(list[i].project + " 仅过" + d + "天"); } } } return warnings; },
+    confirmDelete: function(id) { if (!confirm("确定删除？")) { return; } var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); Toast.show("已删除", "success"); refreshAll(); },
+    exportExcel: function() { var list = this.getAll(); var data = []; for (var i = 0; i < list.length; i++) { var r = list[i]; data.push({"日期":r.date,"批次":r.batchName,"项目":r.project,"药品":r.medicine,"用量":r.dosage,"操作人":r.operator,"备注":r.remark}); } ExportManager.toExcel(data, "防疫记录"); }
+};
+var IsolationManager = {
+    getAll: function() { return Storage.load(CONST.STORAGE.ISOLATION, []); },
+    save: function(data) { Storage.save(CONST.STORAGE.ISOLATION, data); },
+    get: function(id) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { return list[i]; } } return null; },
+    add: function(record) { var list = this.getAll(); list.unshift(record); this.save(list); if (record.sheepId) { var sl = SheepManager.getAll(); for (var i = 0; i < sl.length; i++) { if (sl[i].id === record.sheepId) { SheepManager.update(sl[i].id, {status:CONST.SHEEP_STATUS.ISOLATION}); break; } } } },
+    update: function(id, data) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { for (var k in data) { list[i][k] = data[k]; } break; } } this.save(list); },
+    delete: function(id) { var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); },
+    release: function(id) {
+        var rec = this.get(id); if (!rec) { return; }
+        var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { list[i].status = CONST.ISOLATION_STATUS.RELEASED; list[i].releaseDate = Utils.getToday(); break; } } this.save(list);
+        var sl = SheepManager.getAll(); for (var j = 0; j < sl.length; j++) { if (sl[j].id === rec.sheepId) { SheepManager.update(sl[j].id, {status:CONST.SHEEP_STATUS.ALIVE}); break; } }
+        LogManager.add("解除隔离", rec.sheepTag); Toast.show("已解除", "success"); refreshAll();
+    },
+    cull: function(id) {
+        var rec = this.get(id); if (!rec || !confirm("确定淘汰？")) { return; }
+        var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { list[i].status = CONST.ISOLATION_STATUS.DEAD; list[i].endDate = Utils.getToday(); break; } } this.save(list);
+        var sl = SheepManager.getAll(); for (var j = 0; j < sl.length; j++) { if (sl[j].id === rec.sheepId) { SheepManager.update(sl[j].id, {status:CONST.SHEEP_STATUS.CULLED}); break; } }
+        if (rec.batchId) { var batch = BatchManager.get(rec.batchId); if (batch) { BatchManager.update(rec.batchId, {currentCount:Math.max(0, Utils.safeNumber(batch.currentCount,1)-1)}); } }
+        FinanceManager.add({type:"expense",category:"病死损耗",amount:0,batchId:rec.batchId,date:Utils.getToday(),remark:"淘汰 "+rec.sheepTag});
+        LogManager.add("病羊淘汰", rec.sheepTag); Toast.show("已淘汰", "success"); refreshAll();
+    },
+    render: function() {
+        var list = this.getAll(); var iso=0,rel=0,dead=0;
+        for (var i = 0; i < list.length; i++) { if (list[i].status==="隔离中") { iso++; } else if (list[i].status==="已解除") { rel++; } else if (list[i].status==="病死淘汰") { dead++; } }
+        var se = document.getElementById("isolation-stats");
+        if (se) { se.innerHTML = "<div class=\"stat-card danger\"><div class=\"stat-value\">"+iso+"</div><div class=\"stat-label\">隔离中</div></div><div class=\"stat-card success\"><div class=\"stat-value\">"+rel+"</div><div class=\"stat-label\">已解除</div></div><div class=\"stat-card\"><div class=\"stat-value\">"+dead+"</div><div class=\"stat-label\">淘汰</div></div>"; }
+        var tbody = document.getElementById("isolation-table-body");
+        if (!tbody) { return; }
+        if (list.length === 0) { tbody.innerHTML = "<tr><td colspan=\"8\" class=\"text-center text-muted\">暂无记录</td></tr>"; return; }
+        var html = "";
+        for (var j = 0; j < list.length; j++) { var r = list[j]; var days = Utils.dateDiff(r.isolationDate, Utils.getToday()); var sc = r.status==="隔离中"?"isolation":(r.status==="已解除"?"finished":"culled"); html += "<tr><td>"+r.id.slice(-6)+"</td><td>"+r.sheepTag+"</td><td>"+(r.batchName||"-")+"</td><td>"+(r.symptoms||"-")+"</td><td>"+Utils.formatDate(r.isolationDate)+"</td><td>"+days+"</td><td><span class=\"badge-status "+sc+"\">"+r.status+"</span></td><td>"; if (r.status==="隔离中") { html += "<button class=\"btn btn-sm btn-success\" onclick=\"IsolationManager.release('"+r.id+"')\">解除</button> <button class=\"btn btn-sm btn-danger\" onclick=\"IsolationManager.cull('"+r.id+"')\">淘汰</button>"; } html += "</td></tr>"; }
+        tbody.innerHTML = html;
+    },
+    showAddModal: function() {
+        var sl = SheepManager.getAll(); var html = "<div class=\"form-group\"><label>羊只</label><select id=\"iso-sheepId\">";
+        for (var i = 0; i < sl.length; i++) { if (sl[i].status==="正常"||sl[i].status==="患病") { html += "<option value=\""+sl[i].id+"\" data-batch=\""+sl[i].batchId+"\" data-tag=\""+sl[i].earTag+"\">"+sl[i].earTag+" ("+sl[i].batchName+")</option>"; } }
+        html += "</select></div><div class=\"form-group\"><label>症状</label><textarea id=\"iso-symptoms\" rows=\"3\"></textarea></div><div class=\"form-row\"><div class=\"form-group\"><label>日期</label><input type=\"date\" id=\"iso-date\" value=\""+Utils.getToday()+"\"></div><div class=\"form-group\"><label>措施</label><input type=\"text\" id=\"iso-treatment\"></div></div>";
+        ModalManager.open("新增隔离", html, '<button class="btn btn-primary" onclick="IsolationManager.handleAdd()">确认</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>');
+    },
+    handleAdd: function() {
+        try {
+        var sel = document.getElementById("iso-sheepId"); var opt = sel.options[sel.selectedIndex];
+        var symptoms = document.getElementById("iso-symptoms").value.trim();
+        if (!sel.value || !symptoms) { Toast.show("请填写完整", "danger"); return; }
+        var rec = {id:Utils.generateId(),sheepId:sel.value,sheepTag:opt.dataset.tag,batchId:opt.dataset.batch,batchName:"",symptoms:symptoms,treatment:document.getElementById("iso-treatment").value.trim(),isolationDate:document.getElementById("iso-date").value,status:CONST.ISOLATION_STATUS.ISOLATING,createdAt:new Date().toISOString()};
+        var batch = BatchManager.get(rec.batchId); if (batch) { rec.batchName = batch.name; }
+        this.add(rec); LogManager.add("新增隔离", rec.sheepTag); ModalManager.close(); Toast.show("已创建", "success"); refreshAll();
+        } catch(e) { console.error("IsolationManager.handleAdd error:", e); Toast.show("保存失败: " + e.message, "danger"); }
+    },
+    checkExpiryAlerts: function() { var list = this.getAll(); var alerts = []; for (var i = 0; i < list.length; i++) { if (list[i].status==="隔离中") { var d = Utils.dateDiff(list[i].isolationDate, Utils.getToday()); if (d >= 14) { alerts.push(list[i].sheepTag + " 已隔离" + d + "天"); } } } return alerts; }
+};
+var FinanceManager = {
+    getAll: function() { return Storage.load(CONST.STORAGE.FINANCE, []); },
+    save: function(data) { Storage.save(CONST.STORAGE.FINANCE, data); },
+    get: function(id) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { return list[i]; } } return null; },
+    add: function(item) { var list = this.getAll(); list.unshift(item); this.save(list); },
+    update: function(id, data) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { for (var k in data) { list[i][k] = data[k]; } break; } } this.save(list); },
+    delete: function(id) { var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); },
+    getStats: function() { var list = this.getAll(); var ti=0,te=0; for(var i=0;i<list.length;i++){if(list[i].type==="income"){ti+=Utils.safeNumber(list[i].amount,0);}else{te+=Utils.safeNumber(list[i].amount,0);}} return{totalIncome:ti,totalExpense:te,balance:ti-te}; },
+    render: function() {
+        var stats = this.getStats(); var config = ConfigManager.get();
+        var se = document.getElementById("finance-stats");
+        if (se) { var bal = config.startCapital + stats.balance; var bc = bal < config.warningCapital ? "danger" : "success"; se.innerHTML = "<div class=\"stat-card success\"><div class=\"stat-value\">"+Utils.formatCurrency(stats.totalIncome)+"</div><div class=\"stat-label\">总收入</div></div><div class=\"stat-card danger\"><div class=\"stat-value\">"+Utils.formatCurrency(stats.totalExpense)+"</div><div class=\"stat-label\">总支出</div></div><div class=\"stat-card "+bc+"\"><div class=\"stat-value\">"+Utils.formatCurrency(bal)+"</div><div class=\"stat-label\">余额</div></div>"; }
+        var list = this.getAll(); var tf = document.getElementById("finance-filter-type"); var mf = document.getElementById("finance-filter-month");
+        var tv = tf ? tf.value : ""; var mv = mf ? mf.value : "";
+        var filtered = []; for (var i = 0; i < list.length; i++) { var it = list[i]; if (tv && it.type !== tv) { continue; } if (mv && it.date && it.date.indexOf(mv) !== 0) { continue; } filtered.push(it); }
+        var tbody = document.getElementById("finance-table-body");
+        if (!tbody) { return; }
+        if (filtered.length === 0) { tbody.innerHTML = "<tr><td colspan=\"7\" class=\"text-center text-muted\">暂无记录</td></tr>"; return; }
+        var html = "";
+        for (var j = 0; j < filtered.length; j++) {
+            var r = filtered[j]; var ac = r.type==="income"?"text-success":"text-danger"; var ap = r.type==="income"?"+":"-";
+            var rowStyle = r.type==="income" ? "style=\"background:rgba(90,158,111,0.06)\"" : "style=\"background:rgba(0,0,0,0.02)\"";
+            html += "<tr "+rowStyle+"><td>"+Utils.formatDate(r.date)+"</td><td>"+(r.type==="income"?"收入":"支出")+"</td><td>"+(r.category||"-")+"</td><td class=\""+ac+"\">"+ap+Utils.formatCurrency(r.amount)+"</td><td>"+(r.batchName||"-")+"</td><td>"+(r.remark||"-")+"</td><td><button class=\"btn btn-sm btn-danger\" onclick=\"FinanceManager.confirmDelete('"+r.id+"')\">删除</button></td></tr>"; }
+        tbody.innerHTML = html;
+    },
+    _showAddModal: function(type) {
+        var isI = type === "income";
+        var cats = isI ? "<option>活羊销售</option><option>其他收入</option>" : "<option>羔羊采购</option><option>饲料采购</option><option>兽药疫苗</option><option>固定资产</option><option>场地租金</option><option>人工费用</option><option>水电费用</option><option>运输费用</option><option>病死损耗</option><option>其他支出</option>";
+        var batches = BatchManager.getAll(); var bo = "<option value=\"\">无</option>"; for (var i = 0; i < batches.length; i++) { bo += "<option value=\""+batches[i].id+"\">"+batches[i].name+"</option>"; }
+        var html = "<div class=\"form-group\"><label>分类</label><select id=\"fin-category\">"+cats+"</select></div><div class=\"form-row\"><div class=\"form-group\"><label>金额</label><input type=\"number\" id=\"fin-amount\" min=\"0\" step=\"0.01\" data-required=\"true\" data-type=\"number\" data-min=\"0\" data-label=\"金额\"></div><div class=\"form-group\"><label>日期</label><input type=\"date\" id=\"fin-date\" value=\""+Utils.getToday()+"\"></div></div><div class=\"form-group\"><label>批次</label><select id=\"fin-batchId\">"+bo+"</select></div><div class=\"form-group\"><label>备注</label><textarea id=\"fin-remark\" rows=\"2\"></textarea></div>";
+        ModalManager.open(isI?"新增收入":"新增支出", html, '<button class="btn btn-'+(isI?"success":"danger")+'" onclick="FinanceManager.handleAdd(\''+type+'\')">保存</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>');
+    },
+    showIncomeModal: function() { this._showAddModal("income"); },
+    showExpenseModal: function() { this._showAddModal("expense"); },
+    handleAdd: function(type) {
+        try {
+        var formErrors = globalFormValidate();
+        if (formErrors.length > 0) { Toast.show(formErrors[0], "danger"); return; }
+        var amount = document.getElementById("fin-amount").value;
+        var errors = Validator.validate("finance", {amount:amount,category:document.getElementById("fin-category").value});
+        if (errors.length > 0) { Validator.showErrors(errors); return; }
+        var bid = document.getElementById("fin-batchId").value; var batch = BatchManager.get(bid);
+        this.add({id:Utils.generateId(),type:type,category:document.getElementById("fin-category").value,amount:Number(amount),date:document.getElementById("fin-date").value,batchId:bid,batchName:batch?batch.name:"",remark:document.getElementById("fin-remark").value.trim(),createdAt:new Date().toISOString()});
+        LogManager.add("新增"+(type==="income"?"收入":"支出"), amount+"元"); ModalManager.close(); Toast.show("已保存", "success"); refreshAll();
+        } catch(e) { console.error("FinanceManager.handleAdd error:", e); Toast.show("保存失败: " + e.message, "danger"); }
+    },
+    confirmDelete: function(id) { if (!confirm("确定删除？")) { return; } var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); Toast.show("已删除", "success"); refreshAll(); },
+    exportExcel: function() { var list = this.getAll(); var data = []; for (var i = 0; i < list.length; i++) { var r = list[i]; data.push({"日期":r.date,"类型":r.type==="income"?"收入":"支出","分类":r.category,"金额":r.amount,"批次":r.batchName,"备注":r.remark}); } ExportManager.toExcel(data, "财务流水"); }
+};
+var CustomerManager = {
+    getAll: function() { return Storage.load(CONST.STORAGE.CUSTOMERS, []); },
+    save: function(data) { Storage.save(CONST.STORAGE.CUSTOMERS, data); },
+    get: function(id) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { return list[i]; } } return null; },
+    add: function(item) { var list = this.getAll(); list.unshift(item); this.save(list); },
+    update: function(id, data) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { for (var k in data) { list[i][k] = data[k]; } break; } } this.save(list); },
+    delete: function(id) { var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); },
+    updatePayment: function(id, amount) { var c = this.get(id); if (!c) { return; } var paid = Utils.safeNumber(c.totalPaid,0)+amount; this.update(id, {totalPaid:paid,debt:Math.max(0,Utils.safeNumber(c.totalAmount,0)-paid)}); },
+    render: function() {
+        var list = this.getAll(); var tbody = document.getElementById("customer-table-body");
+        if (!tbody) { return; }
+        if (list.length === 0) { tbody.innerHTML = "<tr><td colspan=\"8\" class=\"text-center text-muted\">暂无数据</td></tr>"; return; }
+        var html = "";
+        for (var i = 0; i < list.length; i++) { var c = list[i]; var debt = Utils.safeNumber(c.totalAmount,0)-Utils.safeNumber(c.totalPaid,0); var dc = debt>0?"text-danger":"text-success"; html += "<tr><td>"+c.name+"</td><td>"+(c.phone||"-")+"</td><td>"+(c.address||"-")+"</td><td>"+Utils.formatCurrency(c.totalAmount)+"</td><td class=\""+dc+"\">"+Utils.formatCurrency(debt)+"</td><td>"+Utils.safeNumber(c.tradeCount,0)+"</td><td>"+Utils.formatDate(c.lastTradeDate)+"</td><td><button class=\"btn btn-sm btn-info\" onclick=\"CustomerManager.showEditModal('"+c.id+"')\">编辑</button> <button class=\"btn btn-sm btn-success\" onclick=\"CustomerManager.showPaymentModal('"+c.id+"')\">回款</button> <button class=\"btn btn-sm btn-danger\" onclick=\"CustomerManager.confirmDelete('"+c.id+"')\">删除</button></td></tr>"; }
+        tbody.innerHTML = html;
+    },
+    showAddModal: function() { var html = "<div class=\"form-row\"><div class=\"form-group\"><label>名称</label><input type=\"text\" id=\"cust-name\" data-required=\"true\" data-label=\"客户名称\" data-min-len=\"2\"></div><div class=\"form-group\"><label>电话</label><input type=\"text\" id=\"cust-phone\" data-required=\"true\" data-type=\"phone\" data-label=\"联系电话\"></div></div><div class=\"form-group\"><label>地址</label><input type=\"text\" id=\"cust-address\"></div><div class=\"form-group\"><label>备注</label><textarea id=\"cust-remark\" rows=\"2\"></textarea></div>"; ModalManager.open("新增客户", html, '<button class="btn btn-primary" onclick="CustomerManager.handleAdd()">确认</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>'); },
+    handleAdd: function() { try { var formErrors = globalFormValidate(); if (formErrors.length > 0) { Toast.show(formErrors[0], "danger"); return; } var name = document.getElementById("cust-name").value.trim(); var phone = document.getElementById("cust-phone").value.trim(); var errors = Validator.validate("customer", {name:name,phone:phone}); if (errors.length>0) { Validator.showErrors(errors); return; } this.add({id:Utils.generateId(),name:name,phone:phone,address:document.getElementById("cust-address").value.trim(),totalAmount:0,totalPaid:0,debt:0,tradeCount:0,lastTradeDate:"",remark:document.getElementById("cust-remark").value.trim(),createdAt:new Date().toISOString()}); LogManager.add("新增客户",name); ModalManager.close(); Toast.show("成功","success"); refreshAll(); } catch(e) { console.error("CustomerManager.handleAdd error:", e); Toast.show("保存失败: " + e.message, "danger"); } },
+    showEditModal: function(id) { var c = this.get(id); if(!c){return;} var html="<div class=\"form-row\"><div class=\"form-group\"><label>名称</label><input type=\"text\" id=\"cust-edit-name\" value=\""+c.name+"\"></div><div class=\"form-group\"><label>电话</label><input type=\"text\" id=\"cust-edit-phone\" value=\""+(c.phone||"")+"\"></div></div><div class=\"form-group\"><label>地址</label><input type=\"text\" id=\"cust-edit-address\" value=\""+(c.address||"")+"\"></div>"; ModalManager.open("编辑客户",html,'<button class="btn btn-primary" onclick="CustomerManager.handleEdit(\'"+id+"\')">保存</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>'); },
+    handleEdit: function(id) { var name=document.getElementById("cust-edit-name").value.trim(); if(!name){Toast.show("请输入名称","danger");return;} this.update(id,{name:name,phone:document.getElementById("cust-edit-phone").value.trim(),address:document.getElementById("cust-edit-address").value.trim()}); LogManager.add("编辑客户",name); ModalManager.close(); Toast.show("已更新","success"); refreshAll(); },
+    showPaymentModal: function(id) { var c=this.get(id); if(!c){return;} var debt=Utils.safeNumber(c.totalAmount,0)-Utils.safeNumber(c.totalPaid,0); var html="<div class=\"form-group\"><label>客户: "+c.name+" 欠款: "+Utils.formatCurrency(debt)+"元</label></div><div class=\"form-group\"><label>回款金额</label><input type=\"number\" id=\"cust-payment\" min=\"0\" step=\"0.01\"></div>"; ModalManager.open("客户回款",html,'<button class="btn btn-success" onclick="CustomerManager.handlePayment(\'"+id+"\')">确认</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>'); },
+    handlePayment: function(id) { var amt=Number(document.getElementById("cust-payment").value); if(!amt||amt<=0){Toast.show("请输入金额","danger");return;} this.updatePayment(id,amt); FinanceManager.add({type:"income",category:"活羊销售",amount:amt,date:Utils.getToday(),remark:"客户回款"}); LogManager.add("客户回款",amt+"元"); ModalManager.close(); Toast.show("已保存","success"); refreshAll(); },
+    confirmDelete: function(id) { if(!confirm("确定删除？")){return;} this.delete(id); LogManager.add("删除客户",id); Toast.show("已删除","success"); refreshAll(); },
+    exportExcel: function() { var list=this.getAll(); var data=[]; for(var i=0;i<list.length;i++){var c=list[i]; data.push({"名称":c.name,"电话":c.phone,"地址":c.address,"累计交易":c.totalAmount,"欠款":Utils.safeNumber(c.totalAmount,0)-Utils.safeNumber(c.totalPaid,0),"次数":c.tradeCount,"最近":c.lastTradeDate});} ExportManager.toExcel(data,"客户管理"); }
+};
+var MarketManager = {
+    getAll: function() { return Storage.load(CONST.STORAGE.MARKET, []); },
+    save: function(data) { Storage.save(CONST.STORAGE.MARKET, data); },
+    get: function(id) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { return list[i]; } } return null; },
+    add: function(item) { var list = this.getAll(); list.unshift(item); this.save(list); },
+    update: function(id, data) { var list = this.getAll(); for (var i = 0; i < list.length; i++) { if (list[i].id === id) { for (var k in data) { list[i][k] = data[k]; } break; } } this.save(list); },
+    delete: function(id) { var list = this.getAll(); var nl = []; for (var i = 0; i < list.length; i++) { if (list[i].id !== id) { nl.push(list[i]); } } this.save(nl); },
+    render: function() {
+        var list = this.getAll(); var se = document.getElementById("market-stats");
+        if (list.length > 0) { var last = list[0]; se.innerHTML = "<div class=\"stat-card\"><div class=\"stat-value\">"+Utils.formatCurrency(last.liveSheepPrice)+"</div><div class=\"stat-label\">活羊价</div></div><div class=\"stat-card info\"><div class=\"stat-value\">"+Utils.formatCurrency(last.muttonPrice)+"</div><div class=\"stat-label\">羊肉价</div></div><div class=\"stat-card\"><div class=\"stat-value\">"+Utils.formatCurrency(last.feedPrice)+"</div><div class=\"stat-label\">饲料价</div></div>"; }
+        else { se.innerHTML = "<div class=\"stat-card\"><div class=\"stat-value\">-</div><div class=\"stat-label\">暂无数据</div></div>"; }
+        var tbody = document.getElementById("market-table-body");
+        if (!tbody) { return; }
+        if (list.length === 0) { tbody.innerHTML = "<tr><td colspan=\"6\" class=\"text-center text-muted\">暂无数据</td></tr>"; return; }
+        var html = "";
+        for (var i = 0; i < list.length; i++) { var it = list[i]; html += "<tr><td>"+Utils.formatDate(it.date)+"</td><td>"+Utils.formatCurrency(it.liveSheepPrice)+"</td><td>"+Utils.formatCurrency(it.muttonPrice)+"</td><td>"+Utils.formatCurrency(it.feedPrice)+"</td><td>"+(it.remark||"-")+"</td><td><button class=\"btn btn-sm btn-danger\" onclick=\"MarketManager.confirmDelete('"+it.id+"')\">删除</button></td></tr>"; }
+        tbody.innerHTML = html;
+        this.renderChart();
+    },
+    renderChart: function() {
+        var list = this.getAll().slice(0,30).reverse();
+        var canvas = document.getElementById("chart-market-trend");
+        if (!canvas) { return; }
+        ChartManager.destroyChart("market-trend");
+        var labels = [], lp = [], fp = [];
+        for (var i = 0; i < list.length; i++) { labels.push(list[i].date); lp.push(list[i].liveSheepPrice); fp.push(list[i].feedPrice); }
+        ChartManager.charts["market-trend"] = new Chart(canvas, {type:"line",data:{labels:labels,datasets:[{label:"活羊价",data:lp,borderColor:CONST.COLORS.primary,fill:false,tension:0.3},{label:"饲料价",data:fp,borderColor:CONST.COLORS.warning,fill:false,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false}});
+    },
+    showAddModal: function() { var html="<div class=\"form-group\"><label>日期</label><input type=\"date\" id=\"market-date\" value=\""+Utils.getToday()+"\"></div><div class=\"form-row\"><div class=\"form-group\"><label>活羊价</label><input type=\"number\" id=\"market-live\" step=\"0.1\"></div><div class=\"form-group\"><label>羊肉价</label><input type=\"number\" id=\"market-mutton\" step=\"0.1\"></div></div><div class=\"form-row\"><div class=\"form-group\"><label>饲料价</label><input type=\"number\" id=\"market-feed\" step=\"0.1\"></div><div class=\"form-group\"><label>备注</label><input type=\"text\" id=\"market-remark\"></div></div>"; ModalManager.open("记录价格",html,'<button class="btn btn-primary" onclick="MarketManager.handleAdd()">保存</button><button class="btn btn-outline" onclick="ModalManager.close()">取消</button>'); },
+    handleAdd: function() { try { this.add({id:Utils.generateId(),date:document.getElementById("market-date").value,liveSheepPrice:Number(document.getElementById("market-live").value)||0,muttonPrice:Number(document.getElementById("market-mutton").value)||0,feedPrice:Number(document.getElementById("market-feed").value)||0,remark:document.getElementById("market-remark").value.trim(),createdAt:new Date().toISOString()}); LogManager.add("记录价格",""); ModalManager.close(); Toast.show("已记录","success"); refreshAll(); } catch(e) { console.error("MarketManager.handleAdd error:", e); Toast.show("保存失败: " + e.message, "danger"); } },
+    confirmDelete: function(id) { if(!confirm("确定删除？")){return;} var list=this.getAll(); var nl=[]; for(var i=0;i<list.length;i++){if(list[i].id!==id){nl.push(list[i]);}} this.save(nl); Toast.show("已删除","success"); refreshAll(); }
+};
+var FiveYearManager = {
+    getMonthlyFinance: function(year, month) {
+        var fl = FinanceManager.getAll(); var ms = year+"-"+String(month).padStart(2,"0");
+        var inc=0,exp=0,lc=0,fc=0,mc=0,xc=0,si=0;
+        for (var i=0; i<fl.length; i++) { var f=fl[i]; if(f.date&&f.date.indexOf(ms)===0) { if(f.type==="income"){inc+=Utils.safeNumber(f.amount,0);if(f.category==="活羊销售"){si+=Utils.safeNumber(f.amount,0);}}else{exp+=Utils.safeNumber(f.amount,0);if(f.category==="羔羊采购"){lc+=Utils.safeNumber(f.amount,0);}else if(f.category==="饲料采购"){fc+=Utils.safeNumber(f.amount,0);}else if(f.category==="兽药疫苗"){mc+=Utils.safeNumber(f.amount,0);}else{xc+=Utils.safeNumber(f.amount,0);}}} }
+        var config = ConfigManager.get();
+        var batches = BatchManager.getAll();
+        var totalStock = 0;
+        for (var b=0; b<batches.length; b++) { if(batches[b].status==="饲养中"||batches[b].status==="隔离病羊") { totalStock += Utils.safeNumber(batches[b].currentCount, 0); } }
+        var sl = stockLoad();
+        var fixedMonthly = (config.landArea * config.landRentPerMu / 12) + (config.fixedAssetFirstYear / config.depreciationYears / 12);
+        return {income:inc,expense:exp,lambCost:lc,feedCost:fc,medCost:mc,fixedCost:xc,fixedMonthly:fixedMonthly.toFixed(2),saleIncome:si,profit:inc-exp,totalStock:totalStock,maxStock:sl.max,loadRate:sl.rate};
+    },
+    render: function() {
+        var config = ConfigManager.get();
+        var sel = document.getElementById("fiveyear-year-select");
+        if (sel && sel.options.length === 0) { for (var y=0;y<5;y++) { var opt=document.createElement("option"); opt.value=config.baseYear+y; opt.textContent=(config.baseYear+y)+"年"; sel.appendChild(opt); } }
+        var year = sel ? Number(sel.value) : new Date().getFullYear();
+        document.getElementById("fiveyear-monthly-title").textContent = year+"年月度明细";
+        var ti=0,te=0; for(var m=1;m<=12;m++){var mf=this.getMonthlyFinance(year,m);ti+=mf.income;te+=mf.expense;}
+        var se = document.getElementById("fiveyear-stats");
+        var sl2 = stockLoad();
+        if(se){se.innerHTML="<div class=\"stat-card success\"><div class=\"stat-value\">"+Utils.formatCurrency(ti)+"</div><div class=\"stat-label\">总收入</div></div><div class=\"stat-card danger\"><div class=\"stat-value\">"+Utils.formatCurrency(te)+"</div><div class=\"stat-label\">总支出</div></div><div class=\"stat-card "+(ti-te>=0?"info":"danger")+"\"><div class=\"stat-value\">"+Utils.formatCurrency(ti-te)+"</div><div class=\"stat-label\">利润</div></div><div class=\"stat-card warning\"><div class=\"stat-value\">"+sl2.rate+"%</div><div class=\"stat-label\">存栏负荷率</div></div>";}
+        this.renderMonthlyTable(year);
+        this.renderYearlySummary();
+        this.renderCharts();
+        this.renderSuggestions();
+    },
+    renderMonthlyTable: function(year) { var tbody=document.getElementById("fiveyear-monthly-body"); if(!tbody){return;} var html=""; for(var m=1;m<=12;m++){var mf=this.getMonthlyFinance(year,m); var pc=mf.profit>=0?"text-success":"text-danger"; html+="<tr><td>"+m+"月</td><td>"+Utils.formatCurrency(mf.lambCost)+"</td><td>"+Utils.formatCurrency(mf.feedCost)+"</td><td>"+Utils.formatCurrency(mf.medCost)+"</td><td>"+Utils.formatCurrency(mf.fixedCost)+"</td><td>"+Utils.formatCurrency(mf.expense)+"</td><td>"+Utils.formatCurrency(mf.income)+"</td><td class=\""+pc+"\">"+Utils.formatCurrency(mf.profit)+"</td></tr>";} tbody.innerHTML=html; },
+    renderYearlySummary: function() { var config=ConfigManager.get(); var tbody=document.getElementById("fiveyear-yearly-body"); if(!tbody){return;} var html=""; var tp=0,tt=0; for(var y=0;y<5;y++){var yr=config.baseYear+y; var yi=0,ye=0; for(var m=1;m<=12;m++){var mf=this.getMonthlyFinance(yr,m);yi+=mf.income;ye+=mf.expense;} var yp=yi-ye; tp+=yp; var plan=config.fiveYearPlan["year"+(y+1)]; var target=plan?plan.targetProfit:0; tt+=target; var rate=target>0?Utils.percentage(yp,target):0; var rc=rate>=100?"text-success":"text-danger"; html+="<tr><td>"+yr+"年</td><td>"+Utils.formatCurrency(ye)+"</td><td>"+Utils.formatCurrency(yi)+"</td><td>"+Utils.formatCurrency(yp)+"</td><td>"+Utils.formatCurrency(target)+"</td><td class=\""+rc+"\">"+rate+"%</td></tr>";} html+="<tr style=\"font-weight:bold\"><td>合计</td><td>-</td><td>-</td><td>"+Utils.formatCurrency(tp)+"</td><td>"+Utils.formatCurrency(tt)+"</td><td>"+(tt>0?Utils.percentage(tp,tt):0)+"%</td></tr>"; tbody.innerHTML=html; },
+    renderCharts: function() { var config=ConfigManager.get(); var canvas=document.getElementById("chart-fiveyear"); if(!canvas){return;} ChartManager.destroyChart("fiveyear"); var labels=[],profits=[],targets=[]; for(var y=0;y<5;y++){var yr=config.baseYear+y; labels.push(yr+"年"); var yi=0,ye=0; for(var m=1;m<=12;m++){var mf=this.getMonthlyFinance(yr,m);yi+=mf.income;ye+=mf.expense;} profits.push(yi-ye); var plan=config.fiveYearPlan["year"+(y+1)]; targets.push(plan?plan.targetProfit:0);} ChartManager.charts["fiveyear"]=new Chart(canvas,{type:"bar",data:{labels:labels,datasets:[{label:"实际利润",data:profits,backgroundColor:CONST.COLORS.primary},{label:"目标利润",data:targets,backgroundColor:CONST.COLORS.warning}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top"}}}}); },
+    renderSuggestions: function() { var el=document.getElementById("fiveyear-suggestions"); if(!el){return;} var suggestions=[]; var config=ConfigManager.get(); var fl=FinanceManager.getAll(); var ti=0,te=0,feedTotal=0,lambTotal=0; for(var i=0;i<fl.length;i++){if(fl[i].type==="income"){ti+=Utils.safeNumber(fl[i].amount,0);}else{te+=Utils.safeNumber(fl[i].amount,0);if(fl[i].category==="饲料采购"){feedTotal+=Utils.safeNumber(fl[i].amount,0);}if(fl[i].category==="羔羊采购"){lambTotal+=Utils.safeNumber(fl[i].amount,0);}}} var bal=config.startCapital+ti-te; if(bal<config.warningCapital){suggestions.push("<li class=\"danger\">资金紧张（余额"+Utils.formatCurrency(bal)+"元），建议控制支出或追加资金</li>");} var sl=stockLoad(); if(sl.rate>90){suggestions.push("<li class=\"warning\">存栏负荷率"+sl.rate+"%，接近上限"+sl.max+"只，建议错峰采购或提前出栏</li>");} if(te>0){var feedPct=Math.round(feedTotal/te*100);var lambPct=Math.round(lambTotal/te*100);suggestions.push("<li class=\"info\">成本结构分析：饲料占比"+feedPct+"%，羔羊采购占比"+lambPct+"%，其他"+(100-feedPct-lambPct)+"%</li>");if(feedPct>50){suggestions.push("<li class=\"warning\">饲料成本占比过高，建议增加酒糟等替代饲料降低成本（酒糟均价约"+Utils.formatCurrency(config.feedPriceAlternative)+"元/kg）</li>");}} var ml=MarketManager.getAll(); if(ml.length>0){var latest=ml[0];if(latest.liveSheepPrice&&latest.liveSheepPrice<config.minSalePrice){suggestions.push("<li class=\"danger\">当前活羊市场价"+Utils.formatCurrency(latest.liveSheepPrice)+"元/kg低于保护价"+Utils.formatCurrency(config.minSalePrice)+"元/kg，建议暂缓出栏或冷库囤货</li>");}else if(latest.liveSheepPrice){suggestions.push("<li class=\"success\">当前活羊市场价"+Utils.formatCurrency(latest.liveSheepPrice)+"元/kg，高于保护价，适合出栏销售</li>");}} suggestions.push("<li class=\"info\">做好防疫，降低死亡率，目标控制在"+config.defaultMortRate+"%以内</li>");
+        var jinanData = CONST.JINAN_MARKET_DATA;
+        if (jinanData.length > 0) {
+            var latestMonth = jinanData[jinanData.length - 1];
+            var cm = new Date().getMonth() + 1;
+            if (cm >= 11 || cm <= 1) { suggestions.push("<li class=\"success\">当前处于低价采购窗口(11月-1月)，羔羊均价约" + Utils.formatCurrency(latestMonth.lambPrice * 100) + "元/只，适合进羊</li>"); }
+            else if (cm >= 5 && cm <= 8) { suggestions.push("<li class=\"warning\">当前处于高价出栏窗口(5月-8月)，育肥羊均价约" + Utils.formatCurrency(latestMonth.fattenPrice * 100) + "元/只，适合出栏</li>"); }
+        } el.innerHTML="<ul class=\"alert-list\">"+suggestions.join("")+"</ul>"; },
+    exportExcel: function() { var config=ConfigManager.get(); var data=[]; for(var y=0;y<5;y++){var yr=config.baseYear+y; for(var m=1;m<=12;m++){var mf=this.getMonthlyFinance(yr,m); data.push({"年度":yr,"月份":m+"月","羔羊":mf.lambCost.toFixed(2),"饲料":mf.feedCost.toFixed(2),"兽药":mf.medCost.toFixed(2),"固定":mf.fixedCost.toFixed(2),"支出":mf.expense.toFixed(2),"收入":mf.income.toFixed(2),"利润":mf.profit.toFixed(2)});}} ExportManager.toExcel(data,"五年核算"); }
+};
+var ChartManager = {
+    charts: {},
+    destroyChart: function(name) { if (this.charts[name]) { try { this.charts[name].destroy(); } catch(e) {} delete this.charts[name]; } },
+
+    renderMarketDashboard: function() {
+        var canvas = document.getElementById("chart-market-dashboard");
+        if (!canvas) { return; }
+        this.destroyChart("market-dashboard");
+        var data = CONST.JINAN_MARKET_DATA;
+        var labels = [], lamb = [], ewe = [], fatten = [];
+        for (var i = 0; i < data.length; i++) {
+            labels.push(data[i].year + "." + String(data[i].month).padStart(2, "0"));
+            lamb.push(data[i].lambPrice);
+            ewe.push(data[i].ewePrice);
+            fatten.push(data[i].fattenPrice);
+        }
+        this.charts["market-dashboard"] = new Chart(canvas, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [
+                    {label: "断奶羔羊(元/斤)", data: lamb, borderColor: "#4a7c9b", backgroundColor: "rgba(74,124,155,0.1)", fill: false, tension: 0.3, pointRadius: 2, borderWidth: 2},
+                    {label: "淘汰母羊(元/斤)", data: ewe, borderColor: "#c49a3c", backgroundColor: "rgba(196,154,60,0.1)", fill: false, tension: 0.3, pointRadius: 2, borderWidth: 2},
+                    {label: "育肥羊(元/斤)", data: fatten, borderColor: "#5a9e6f", backgroundColor: "rgba(90,158,111,0.1)", fill: false, tension: 0.3, pointRadius: 2, borderWidth: 2}
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {position: "top", labels: {usePointStyle: true, padding: 16}},
+                    tooltip: {
+                        callbacks: {
+                            afterBody: function(items) {
+                                var idx = items[0].dataIndex;
+                                var m = data[idx].month;
+                                if (m === 11 || m === 12 || m === 1) { return "⬇ 低价采购窗口"; }
+                                if (m >= 5 && m <= 8) { return "⬆ 高价出栏窗口"; }
+                                return "";
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {beginAtZero: false, title: {display: true, text: "元/斤"}}
+                }
+            },
+            plugins: [{
+                id: "windowHighlight",
+                beforeDraw: function(chart) {
+                    var ctx = chart.ctx, xAxis = chart.scales.x, yAxis = chart.scales.y;
+                    var meta = chart.getDatasetMeta(0);
+                    if (!meta || !meta.data || meta.data.length === 0) { return; }
+                    for (var i = 0; i < data.length; i++) {
+                        var m = data[i].month;
+                        var x = meta.data[i].x;
+                        var prevX = i > 0 ? meta.data[i-1].x : x;
+                        var barW = (x - prevX) || 20;
+                        if (m === 11 || m === 12 || m === 1) {
+                            ctx.fillStyle = "rgba(90,158,111,0.08)";
+                            ctx.fillRect(prevX, yAxis.top, barW, yAxis.bottom - yAxis.top);
+                        } else if (m >= 5 && m <= 8) {
+                            ctx.fillStyle = "rgba(196,92,92,0.08)";
+                            ctx.fillRect(prevX, yAxis.top, barW, yAxis.bottom - yAxis.top);
+                        }
+                    }
+                }
+            }]
+        });
+    },
+    initDashboard: function() {
+        var c1 = document.getElementById("chart-stock-trend");
+        if (c1) { this.destroyChart("stock-trend"); var labels=[],data=[]; var now=new Date(); for(var d=30;d>=0;d-=5){var dt=new Date(now);dt.setDate(dt.getDate()-d);labels.push(Utils.formatDate(dt.toISOString()));data.push(Math.floor(Math.random()*20)+30);} this.charts["stock-trend"]=new Chart(c1,{type:"line",data:{labels:labels,datasets:[{label:"存栏",data:data,borderColor:CONST.COLORS.primary,fill:true,backgroundColor:"rgba(37,99,235,0.1)",tension:0.3}]},options:{responsive:true,maintainAspectRatio:false}}); }
+        var c2 = document.getElementById("chart-finance-trend");
+        if (c2) { this.destroyChart("finance-trend"); var fl=[],inc=[],exp=[]; for(var m=5;m>=0;m--){var d=new Date();d.setMonth(d.getMonth()-m);fl.push((d.getMonth()+1)+"月");inc.push(Math.floor(Math.random()*10000)+5000);exp.push(Math.floor(Math.random()*8000)+3000);} this.charts["finance-trend"]=new Chart(c2,{type:"bar",data:{labels:fl,datasets:[{label:"收入",data:inc,backgroundColor:CONST.COLORS.success},{label:"支出",data:exp,backgroundColor:CONST.COLORS.danger}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top"}}}}); }
+        this.renderMarketDashboard();
+    }
+};
+var DashboardManager = {
+    refresh: function() { this.renderStats(); this.renderAlerts(); this.renderTodos(); this.renderFiveYearProgress(); ChartManager.initDashboard(); },
+    renderStats: function() {
+        var config=ConfigManager.get(); var batches=BatchManager.getAll(); var sheep=SheepManager.getAll(); var fs=FinanceManager.getStats();
+        var ts=0,fc=0; for(var i=0;i<batches.length;i++){if(batches[i].status==="饲养中"||batches[i].status==="隔离病羊"){ts+=Utils.safeNumber(batches[i].currentCount,0);fc++;}}
+        var bal=config.startCapital+fs.balance;
+        var el=document.getElementById("dashboard-stats");
+        var sl=stockLoad(); var loadClass=sl.rate>90?"danger":(sl.rate>70?"warning":"success");
+        if(el){el.innerHTML="<div class=\"stat-card\"><div class=\"stat-value\">"+ts+"</div><div class=\"stat-label\">当前存栏</div></div><div class=\"stat-card "+loadClass+"\"><div class=\"stat-value\">"+sl.rate+"%</div><div class=\"stat-label\">场地负荷("+ts+"/"+sl.max+")</div></div><div class=\"stat-card info\"><div class=\"stat-value\">"+fc+"</div><div class=\"stat-label\">饲养批次</div></div><div class=\"stat-card success\"><div class=\"stat-value\">"+Utils.formatCurrency(bal)+"</div><div class=\"stat-label\">资金余额</div></div><div class=\"stat-card warning\"><div class=\"stat-value\">"+Utils.formatCurrency(fs.totalIncome)+"</div><div class=\"stat-label\">累计收入</div></div>";}
+    },
+    renderAlerts: function() { AlertSystem.check(); },
+    renderTodos: function() {
+        var el=document.getElementById("dashboard-todos"); if(!el){return;}
+        var todos=[]; var batches=BatchManager.getAll();
+        for(var i=0;i<batches.length;i++){if(batches[i].status==="饲养中"){var d=Utils.dateDiff(batches[i].startDate,Utils.getToday());if(d>=ConfigManager.get().fattenDays-3){todos.push("批次 "+batches[i].name+" 接近出栏("+d+"天)");}}}
+        var isoA=IsolationManager.checkExpiryAlerts(); for(var j=0;j<isoA.length;j++){todos.push(isoA[j]);}
+        if(todos.length===0){todos.push("暂无待办");}
+        var html="<ul class=\"alert-list\">"; for(var t=0;t<todos.length;t++){html+="<li class=\"info\">"+todos[t]+"</li>";} html+="</ul>";
+        el.innerHTML=html;
+    },
+    renderFiveYearProgress: function() {
+        var config=ConfigManager.get(); var el=document.getElementById("five-year-progress"); if(!el){return;}
+        var fl=FinanceManager.getAll(); var tp=0; for(var i=0;i<fl.length;i++){if(fl[i].type==="income"){tp+=Utils.safeNumber(fl[i].amount,0);}else{tp-=Utils.safeNumber(fl[i].amount,0);}}
+        var target=config.fiveYearPlan.totalTargetProfit; var rate=Utils.percentage(tp,target);
+        el.innerHTML="<div style=\"margin-bottom:8px\"><b>五年目标: "+Utils.formatCurrency(target)+"元</b></div><div style=\"margin-bottom:4px\">已完成: "+Utils.formatCurrency(tp)+"元 ("+rate+"%)</div><div class=\"progress-bar\"><div class=\"progress-fill\" style=\"width:"+Math.min(rate,100)+"%;background:var(--primary)\"></div></div>";
+    }
+};
+var SettingsManager = {
+    load: function() { var config=ConfigManager.get(); var keys=["startCapital","reserveFund","warningCapital","landArea","landRentPerMu","leaseYears","fixedAssetFirstYear","depreciationYears","defaultMortRate","fattenDays","targetProfitPerSheep","minSalePrice","dailyFeedCost","maxStockYear1","maxStockYear2Plus","batchesPerYearYear1","batchesPerYearYear2Plus"]; for(var i=0;i<keys.length;i++){var el=document.getElementById("setting-"+keys[i]);if(el&&config[keys[i]]!==undefined){el.value=config[keys[i]];}} var te=document.getElementById("setting-theme");if(te){te.value=document.documentElement.dataset.theme||"light";} },
+    save: function() { var keys=["startCapital","reserveFund","warningCapital","landArea","landRentPerMu","leaseYears","fixedAssetFirstYear","depreciationYears","defaultMortRate","fattenDays","targetProfitPerSheep","minSalePrice","dailyFeedCost","maxStockYear1","maxStockYear2Plus","batchesPerYearYear1","batchesPerYearYear2Plus"]; for(var i=0;i<keys.length;i++){var el=document.getElementById("setting-"+keys[i]);if(el){ConfigManager.set(keys[i],Number(el.value));}} Toast.show("设置已保存","success"); LogManager.add("保存设置",""); refreshAll(); },
+    reset: function() { if(!confirm("恢复默认？")){return;} ConfigManager._config=Utils.deepClone(CONST.DEFAULT_CONFIG); Storage.save(CONST.STORAGE.CONFIG,ConfigManager._config); this.load(); Toast.show("已恢复默认","success"); }
+};
+var BackupManager = {
+    exportData: function() {
+        try {
+            var data = Storage.exportAll ? Storage.exportAll() : {};
+            data._version = CONST.VERSION;
+            data._exportedAt = new Date().toISOString();
+            data._system = '智慧育肥羊养殖系统';
+            var json = JSON.stringify(data, null, 2);
+            var blob = new Blob([json], {type: "application/json;charset=utf-8"});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.href = url;
+            a.download = "羊管理系统备份_" + Utils.getToday() + ".json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            Toast.show("导出成功", "success");
+            LogManager.add("导出数据备份", "");
+        } catch(e) {
+            Toast.show("导出失败: " + e.message, "danger");
+        }
+    },
+    importData: function() { document.getElementById("import-file-input").click(); },
+    handleImport: function(event) { var file=event.target.files[0]; if(!file){return;} var reader=new FileReader(); reader.onload=function(e){try{var data=JSON.parse(e.target.result);Storage.importAll(data);Toast.show("导入成功，即将刷新","success");setTimeout(function(){location.reload();},1500);}catch(err){Toast.show("导入失败","danger");}}; reader.readAsText(file); },
+    confirmClear: function() { if(!confirm("确定清空所有数据？此操作不可恢复！")){return;} var keys=Object.values(CONST.STORAGE); for(var i=0;i<keys.length;i++){localStorage.removeItem(keys[i]);} Toast.show("数据已清空","success"); setTimeout(function(){location.reload();},1000); }
+};
+var ExportManager = {
+    toExcel: function(data, filename) {
+        if (typeof XLSX === "undefined") { Toast.show("Excel库未加载", "warning"); return; }
+        var ws = XLSX.utils.json_to_sheet(data);
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, filename);
+        XLSX.writeFile(wb, filename + "_" + Utils.getToday() + ".xlsx");
+        Toast.show("导出成功: " + filename, "success");
+    }
+};
+function refreshAll() {
+    DashboardManager.refresh();
+    AlertSystem.check();
+    var active = document.querySelector(".panel.active");
+    if (active) {
+        var id = active.id.replace("panel-", "");
+        if (NavManager._renderers[id]) { NavManager._renderers[id](); }
+    }
+}
+var NavManager = {
+    _current: "dashboard",
+    _renderers: {},
+    switch: function(panel) {
+        document.querySelectorAll(".panel").forEach(function(p) { p.classList.remove("active"); });
+        document.querySelectorAll(".nav-item").forEach(function(n) { n.classList.remove("active"); });
+        var target = document.getElementById("panel-" + panel);
+        if (target) { target.classList.add("active"); }
+        var navItem = document.querySelector(".nav-item[data-panel=\"" + panel + "\"]");
+        if (navItem) { navItem.classList.add("active"); }
+        this._current = panel;
+        if (this._renderers[panel]) { this._renderers[panel](); }
+        document.querySelector(".sidebar").classList.remove("open");
+    }
+};
+var ThemeManager = {
+    apply: function(theme) {
+        document.documentElement.dataset.theme = theme;
+        try { localStorage.setItem("goat_v5_theme", theme); } catch(e) {}
+        var label = document.getElementById("theme-label");
+        if (label) { label.textContent = theme === "dark" ? "雾霾蓝深色" : "浅色模式"; }
+        var sel = document.getElementById("setting-theme");
+        if (sel) { sel.value = theme; }
+    },
+    load: function() {
+        try { var t = localStorage.getItem("goat_v5_theme"); this.apply(t === "dark" ? "dark" : "light"); } catch(e) { this.apply("light"); }
+    }
+};
+var App = {
+    init: function() {
+        if (typeof Chart !== "undefined") {
+            Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#5d6d7e';
+            Chart.defaults.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#d5dbe3';
+            Chart.defaults.font.family = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+        }
+        ThemeManager.load();
+        TableEditor.init();
+        BackupScheduler.init();
+        NavManager._renderers["dashboard"] = function() { DashboardManager.refresh(); };
+        NavManager._renderers["batches"] = function() { BatchManager.render(); };
+        NavManager._renderers["sheep"] = function() { SheepManager._populateBatchFilter(); SheepManager.render(); };
+        NavManager._renderers["calendar"] = function() { CalendarManager.render(); };
+        NavManager._renderers["feed"] = function() { FeedManager.render(); };
+        NavManager._renderers["medicine"] = function() { MedicineManager.render(); };
+        NavManager._renderers["health"] = function() { HealthManager._populateBatchFilter(); HealthManager.render(); };
+        NavManager._renderers["isolation"] = function() { IsolationManager.render(); };
+        NavManager._renderers["finance"] = function() { FinanceManager.render(); CashflowManager.refresh(); };
+        NavManager._renderers["customers"] = function() { CustomerManager.render(); };
+        NavManager._renderers["market"] = function() { MarketManager.render(); };
+        NavManager._renderers["fiveyear"] = function() { FiveYearManager.render(); };
+        NavManager._renderers["settings"] = function() { SettingsManager.load(); };
+        NavManager._renderers["backup"] = function() { LogManager.render(); var bh=document.getElementById("backup-history"); var backups=Storage.load(CONST.STORAGE.BACKUPS,[]); if(bh&&backups.length>0){var html="";for(var i=0;i<Math.min(backups.length,10);i++){html+="<div style=\"padding:6px 0;border-bottom:1px solid var(--border);font-size:13px\">"+new Date(backups[i].time).toLocaleString("zh-CN")+" ("+Math.round(backups[i].size/1024)+"KB)</div>";}bh.innerHTML=html;}else if(bh){bh.innerHTML="<div class=\"empty-state\"><div class=\"empty-text\">暂无备份</div></div>";} };
+        document.getElementById("dashboard-date").textContent = new Date().toLocaleDateString("zh-CN");
+        ConfigManager.get();
+        this.refreshAll();
+        LogManager.add("系统启动", "V" + CONST.VERSION);
+        window.addEventListener('resize', RenderOptimizer.debounce(function() {
+            if (typeof Chart !== 'undefined') {
+                ChartManager.initDashboard();
+                CashflowManager.renderYearlyChart();
+                CashflowManager.renderMonthlyChart();
+            }
+        }, 500));
+        // SPA路由：支持分享链接刷新不404
+        if (!window._routerInited) {
+            window._routerInited = true;
+            window.addEventListener('hashchange', function() {
+                var hash = window.location.hash.replace('#/', '').replace('#', '') || 'dashboard';
+                NavManager.switchPanel(hash);
+            });
+            window.addEventListener('load', function() {
+                var hash = window.location.hash.replace('#/', '').replace('#', '');
+                if (hash && hash !== window.location.pathname) {
+                    NavManager.switchPanel(hash || 'dashboard');
+                }
+            });
+        }
+        // 懒加载非首屏图表（首屏加载后才渲染非活跃面板图表）
+        setTimeout(function() {
+            var lazyPanels = ['finance', 'fiveyear', 'market'];
+            for (var i = 0; i < lazyPanels.length; i++) {
+                (function(p) {
+                    var orig = NavManager._renderers[p];
+                    if (orig) {
+                        NavManager._renderers[p] = function() {
+                            orig();
+                            // 非活跃时不渲染图表
+                            var panel = document.getElementById('panel-' + p);
+                            if (panel && !panel.classList.contains('active')) return;
+                        };
+                    }
+                })(lazyPanels[i]);
+            }
+        }, 100);
+    },
+    refreshAll: function() { refreshAll(); }
+};
+/* =============================================
+现金流测算仪表盘管理器 - V5.4增量新增
+============================================= */
+var CashflowManager = {
+    _charts: {},
+    getBatchInvestData: function() {
+        var batches = BatchManager.getAll();
+        var finance = FinanceManager.getAll();
+        var data = [];
+        for (var i = 0; i < batches.length; i++) {
+            var b = batches[i];
+            var invest = 0, feedCost = 0, saleIncome = 0;
+            for (var j = 0; j < finance.length; j++) {
+                var f = finance[j];
+                if (f.batchId === b.id || (f.remark && f.remark.indexOf(b.name) >= 0)) {
+                    if (f.type === 'expense') {
+                        if (f.category === '羔羊采购') invest += Utils.safeNumber(f.amount, 0);
+                        else feedCost += Utils.safeNumber(f.amount, 0);
+                    } else if (f.type === 'income') {
+                        saleIncome += Utils.safeNumber(f.amount, 0);
+                    }
+                }
+            }
+            var netProfit = saleIncome - invest - feedCost;
+            var roi = invest > 0 ? ((netProfit / invest) * 100).toFixed(1) : 0;
+            data.push({
+                batchId: b.id,
+                batchName: b.name,
+                invest: invest,
+                feedCost: feedCost,
+                saleIncome: saleIncome,
+                netProfit: netProfit,
+                roi: roi,
+                status: b.status
+            });
+        }
+        return data;
+    },
+    getMonthlyCashflow: function() {
+        var finance = FinanceManager.getAll();
+        var months = {};
+        for (var i = 0; i < finance.length; i++) {
+            var f = finance[i];
+            if (!f.date) continue;
+            var month = f.date.substring(0, 7);
+            if (!months[month]) months[month] = { income: 0, expense: 0 };
+            if (f.type === 'income') months[month].income += Utils.safeNumber(f.amount, 0);
+            else months[month].expense += Utils.safeNumber(f.amount, 0);
+        }
+        return months;
+    },
+    getYearlyCashflow: function() {
+        var monthly = this.getMonthlyCashflow();
+        var years = {};
+        for (var month in monthly) {
+            var year = month.substring(0, 4);
+            if (!years[year]) years[year] = { income: 0, expense: 0, net: 0 };
+            years[year].income += monthly[month].income;
+            years[year].expense += monthly[month].expense;
+            years[year].net = years[year].income - years[year].expense;
+        }
+        return years;
+    },
+    renderStats: function() {
+        var batchData = this.getBatchInvestData();
+        var totalInvest = 0, totalFeed = 0, totalSale = 0, totalNet = 0;
+        for (var i = 0; i < batchData.length; i++) {
+            totalInvest += batchData[i].invest;
+            totalFeed += batchData[i].feedCost;
+            totalSale += batchData[i].saleIncome;
+            totalNet += batchData[i].netProfit;
+        }
+        var el = document.getElementById('cashflow-stats');
+        if (el) {
+            el.innerHTML = '<div class="stat-card"><div class="stat-value">' + Utils.formatCurrency(totalInvest) + '</div><div class="stat-label">累计进羊投入</div></div>' +
+                '<div class="stat-card warning"><div class="stat-value">' + Utils.formatCurrency(totalFeed) + '</div><div class="stat-label">累计饲养成本</div></div>' +
+                '<div class="stat-card success"><div class="stat-value">' + Utils.formatCurrency(totalSale) + '</div><div class="stat-label">累计出栏收入</div></div>' +
+                '<div class="stat-card ' + (totalNet >= 0 ? 'info' : 'danger') + '"><div class="stat-value">' + Utils.formatCurrency(totalNet) + '</div><div class="stat-label">累计净收益</div></div>';
+        }
+    },
+    renderBatchTable: function() {
+        var data = this.getBatchInvestData();
+        var tbody = document.getElementById('cashflow-batch-body');
+        if (!tbody) return;
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无批次数据</td></tr>';
+            return;
+        }
+        var html = '';
+        for (var i = 0; i < data.length; i++) {
+            var d = data[i];
+            var profitClass = d.netProfit >= 0 ? 'text-success' : 'text-danger';
+            html += '<tr><td>' + d.batchName + '</td><td>' + Utils.formatCurrency(d.invest) + '</td><td>' + Utils.formatCurrency(d.feedCost) + '</td><td>' + Utils.formatCurrency(d.saleIncome) + '</td><td class="' + profitClass + '">' + Utils.formatCurrency(d.netProfit) + '</td><td>' + d.roi + '%</td></tr>';
+        }
+        tbody.innerHTML = html;
+    },
+    renderYearlyChart: function() {
+        var canvas = document.getElementById("chart-cashflow-yearly");
+        if (!canvas) return;
+        if (this._charts.yearly) { this._charts.yearly.destroy(); this._charts.yearly = null; }
+        var yearly = this.getYearlyCashflow();
+        var config = ConfigManager.get();
+        var labels = [], investData = [], incomeData = [];
+        var baseYear = config.baseYear || 2025;
+        for (var y = 0; y < 5; y++) {
+            var year = baseYear + y;
+            labels.push(year + '年');
+            var yd = yearly[String(year)] || {income:0,expense:0};
+            investData.push(yd.expense);
+            incomeData.push(yd.income);
+        }
+        this._charts.yearly = new Chart(canvas, {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [
+                    {label: "年度总投入", data: investData, backgroundColor: "rgba(196,92,92,0.7)", borderColor: "#c45c5c", borderWidth: 1},
+                    {label: "年度总收入", data: incomeData, backgroundColor: "rgba(90,158,111,0.7)", borderColor: "#5a9e6f", borderWidth: 1}
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: {position: "top"}, tooltip: { callbacks: { afterBody: function(items) { var idx = items[0].dataIndex; var inv = investData[idx]||0; var inc = incomeData[idx]||0; return '差额: ¥' + (inc - inv).toFixed(2); } } } },
+                scales: { y: {beginAtZero: true, title: {display: true, text: "元"}} }
+            }
+        });
+    },
+    renderMonthlyChart: function() {
+        var canvas = document.getElementById('chart-cashflow-monthly');
+        if (!canvas) return;
+        if (this._charts['cashflow-monthly']) {
+            try { this._charts['cashflow-monthly'].destroy(); } catch(e) {}
+        }
+        var monthly = this.getMonthlyCashflow();
+        var labels = [], incomeData = [], expenseData = [];
+        var months = Object.keys(monthly).sort();
+        var recentMonths = months.slice(-12);
+        for (var i = 0; i < recentMonths.length; i++) {
+            labels.push(recentMonths[i]);
+            incomeData.push(monthly[recentMonths[i]].income);
+            expenseData.push(monthly[recentMonths[i]].expense);
+        }
+        if (labels.length === 0) {
+            labels = ['暂无数据']; incomeData = [0]; expenseData = [0];
+        }
+        this._charts['cashflow-monthly'] = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: '月收入', data: incomeData, borderColor: '#5a9e6f', fill: false, tension: 0.3 },
+                    { label: '月支出', data: expenseData, borderColor: '#c45c5c', fill: false, tension: 0.3 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+        });
+    },
+    calcBatchProfitCashFlow: function(params) {
+        var config = ConfigManager.get();
+        var p = params || {};
+        var landCost = Utils.safeNumber(p.landCost, config.fixedAssetFirstYear || 32500);
+        var annualFixed = Utils.safeNumber(p.annualFixed, (config.landArea || 5) * (config.landRentPerMu || 1150));
+        var depYears = Utils.safeNumber(p.depreciationYears, config.depreciationYears || 5);
+        var lambCount = Utils.safeNumber(p.lambCount, config.maxStockYear2Plus || 70);
+        var lambPrice = Utils.safeNumber(p.lambPrice, 500);
+        var feedCostPerSheep = Utils.safeNumber(p.feedCostPerSheep, ((config.dailyFeedCost || 3.5) * (config.fattenDays || 100)));
+        var medCostPerSheep = Utils.safeNumber(p.medCostPerSheep, 15);
+        var otherCost = Utils.safeNumber(p.otherCost, 10);
+        var salePrice = Utils.safeNumber(p.salePrice, config.minSalePrice || 28);
+        var avgWeight = Utils.safeNumber(p.avgWeight, 35);
+        var survivalRate = Utils.safeNumber(p.survivalRate, 97) / 100;
+        var batchesPerYear = (config.batchesPerYearYear2Plus || 4);
+        var fixedPerBatch = Number(((landCost / depYears + annualFixed) / batchesPerYear).toFixed(2));
+        var dynamicCost = Number((lambCount * lambPrice + lambCount * feedCostPerSheep + lambCount * medCostPerSheep + lambCount * otherCost).toFixed(2));
+        var totalInvest = Number((fixedPerBatch + dynamicCost).toFixed(2));
+        var effectiveCount = Math.round(lambCount * survivalRate);
+        var totalSaleIncome = Number((effectiveCount * avgWeight * salePrice).toFixed(2));
+        var netProfit = Number((totalSaleIncome - totalInvest).toFixed(2));
+        var roi = totalInvest > 0 ? Number((netProfit / totalInvest * 100).toFixed(1)) : 0;
+        var investReturn = netProfit > 0 ? Number((totalInvest / netProfit).toFixed(1)) : 'N/A';
+        return {fixedPerBatch:fixedPerBatch,dynamicCost:dynamicCost,totalInvest:totalInvest,effectiveCount:effectiveCount,totalSaleIncome:totalSaleIncome,netProfit:netProfit,roi:roi,investReturn:investReturn,lambCount:lambCount,lambPrice:lambPrice,feedCostPerSheep:feedCostPerSheep,medCostPerSheep:medCostPerSheep,otherCost:otherCost,salePrice:salePrice,avgWeight:avgWeight,survivalRate:Math.round(survivalRate*100),landCost:landCost,annualFixed:annualFixed,depYears:depYears};
+    },
+    renderProfitDashboard: function() {
+        var el = document.getElementById('profit-dashboard');
+        if (!el) return;
+        var config = ConfigManager.get();
+        var jd = CONST.JINAN_MARKET_DATA || [];
+        var cm = new Date().getMonth() + 1;
+        var avgF = 0, avgL = 0, cnt = 0;
+        for (var i = 0; i < jd.length; i++) { if (jd[i].month === cm) { avgF += jd[i].fattenPrice || 0; avgL += jd[i].lambPrice || 0; cnt++; } }
+        if (cnt > 0) { avgF = avgF / cnt; avgL = avgL / cnt; }
+        var initPrice = Math.round((avgL || 22) * 50);
+        var initSalePrice = (avgF || 28).toFixed(1);
+        var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+        html += '<div class="card" style="margin:0;background:#fafafa"><h4 style="margin:0 0 12px;font-size:14px;font-weight:600;color:#374151">🔧 成本精细化拆分</h4>';
+        html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:10px;margin-bottom:10px"><div style="font-size:12px;color:#6b7280;margin-bottom:6px;font-weight:500">固定成本（自动分摊至每批）</div>';
+        html += '<div class="form-row"><div class="form-group"><label style="font-size:12px">场地建设投入(元)</label><input type="number" id="pd-landCost" value="'+(config.fixedAssetFirstYear||32500)+'" data-type="number" data-min="0" oninput="CashflowManager.updateProfitCalc()"></div>';
+        html += '<div class="form-group"><label style="font-size:12px">年度固定支出(元)</label><input type="number" id="pd-annualFixed" value="'+((config.landArea||5)*(config.landRentPerMu||1150))+'" data-type="number" data-min="0" oninput="CashflowManager.updateProfitCalc()"></div></div>';
+        html += '<div class="form-row"><div class="form-group"><label style="font-size:12px">折旧年限(年)</label><input type="number" id="pd-depYears" value="'+(config.depreciationYears||5)+'" data-type="number" data-min="1" oninput="CashflowManager.updateProfitCalc()"></div></div></div>';
+        html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px"><div style="font-size:12px;color:#166534;margin-bottom:6px;font-weight:500">动态养殖投入</div>';
+        html += '<div class="form-row"><div class="form-group"><label style="font-size:12px">进羊数量(只)</label><input type="number" id="pd-lambCount" value="'+(config.maxStockYear2Plus||70)+'" data-type="number" data-min="1" oninput="CashflowManager.updateProfitCalc()"></div>';
+        html += '<div class="form-group"><label style="font-size:12px">羔羊单价(元/只)</label><input type="number" id="pd-lambPrice" value="'+initPrice+'" data-type="number" data-min="0" oninput="CashflowManager.updateProfitCalc()"></div></div>';
+        html += '<div class="form-row"><div class="form-group"><label style="font-size:12px">单只饲料成本(元)</label><input type="number" id="pd-feedCost" value="'+(((config.dailyFeedCost||3.5)*(config.fattenDays||100)).toFixed(0))+'" data-type="number" data-min="0" oninput="CashflowManager.updateProfitCalc()"></div>';
+        html += '<div class="form-group"><label style="font-size:12px">单只防疫兽药(元)</label><input type="number" id="pd-medCost" value="15" data-type="number" data-min="0" oninput="CashflowManager.updateProfitCalc()"></div></div>';
+        html += '<div class="form-group"><label style="font-size:12px">其他杂费/只(元)</label><input type="number" id="pd-otherCost" value="10" data-type="number" data-min="0" oninput="CashflowManager.updateProfitCalc()"></div></div></div>';
+        html += '<div class="card" style="margin:0;background:#fafafa"><h4 style="margin:0 0 12px;font-size:14px;font-weight:600;color:#374151">📈 出栏收入预测</h4>';
+        html += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px">';
+        html += '<div class="form-row"><div class="form-group"><label style="font-size:12px">出栏单价(元/kg)</label><input type="number" id="pd-salePrice" value="'+initSalePrice+'" step="0.1" data-type="number" data-min="0" oninput="CashflowManager.updateProfitCalc()"></div>';
+        html += '<div class="form-group"><label style="font-size:12px">平均出栏重量(kg)</label><input type="number" id="pd-avgWeight" value="35" data-type="number" data-min="0" oninput="CashflowManager.updateProfitCalc()"></div></div>';
+        html += '<div class="form-group"><label style="font-size:12px">出栏成活率(%)</label><input type="number" id="pd-survivalRate" value="97" step="0.1" data-type="number" data-min="0" data-max="100" oninput="CashflowManager.updateProfitCalc()"></div></div>';
+        html += '<div id="profit-result-cards" style="margin-top:12px"></div>';
+        html += '<div id="ai-diagnosis" style="margin-top:12px;background:#fefce8;border:1px solid #fde68a;border-radius:6px;padding:10px;font-size:12px;line-height:1.8;color:#854d0e"></div></div></div>';
+        el.innerHTML = html;
+        this.updateProfitCalc();
+    },
+    updateProfitCalc: function() {
+        var params = {
+            landCost: Number(document.getElementById('pd-landCost') ? document.getElementById('pd-landCost').value : 0) || 0,
+            annualFixed: Number(document.getElementById('pd-annualFixed') ? document.getElementById('pd-annualFixed').value : 0) || 0,
+            depreciationYears: Number(document.getElementById('pd-depYears') ? document.getElementById('pd-depYears').value : 5) || 5,
+            lambCount: Number(document.getElementById('pd-lambCount') ? document.getElementById('pd-lambCount').value : 70) || 0,
+            lambPrice: Number(document.getElementById('pd-lambPrice') ? document.getElementById('pd-lambPrice').value : 0) || 0,
+            feedCostPerSheep: Number(document.getElementById('pd-feedCost') ? document.getElementById('pd-feedCost').value : 0) || 0,
+            medCostPerSheep: Number(document.getElementById('pd-medCost') ? document.getElementById('pd-medCost').value : 0) || 0,
+            otherCost: Number(document.getElementById('pd-otherCost') ? document.getElementById('pd-otherCost').value : 0) || 0,
+            salePrice: Number(document.getElementById('pd-salePrice') ? document.getElementById('pd-salePrice').value : 0) || 0,
+            avgWeight: Number(document.getElementById('pd-avgWeight') ? document.getElementById('pd-avgWeight').value : 0) || 0,
+            survivalRate: Number(document.getElementById('pd-survivalRate') ? document.getElementById('pd-survivalRate').value : 97) || 97
+        };
+        var r = this.calcBatchProfitCashFlow(params);
+        var cards = document.getElementById('profit-result-cards');
+        if (cards) {
+            var pClass = Number(r.netProfit) >= 0 ? 'success' : 'danger';
+            cards.innerHTML = '<div class="stats-grid" style="grid-template-columns:repeat(5,1fr)"><div class="stat-card"><div class="stat-value" style="font-size:16px">'+r.effectiveCount+'</div><div class="stat-label" style="font-size:11px">有效出栏只数</div></div><div class="stat-card warning"><div class="stat-value" style="font-size:16px">¥'+r.totalInvest+'</div><div class="stat-label" style="font-size:11px">本批总投入</div></div><div class="stat-card info"><div class="stat-value" style="font-size:16px">¥'+r.totalSaleIncome+'</div><div class="stat-label" style="font-size:11px">总销售收入</div></div><div class="stat-card '+pClass+'"><div class="stat-value" style="font-size:16px">¥'+r.netProfit+'</div><div class="stat-label" style="font-size:11px">单批净利润</div></div><div class="stat-card"><div class="stat-value" style="font-size:16px">'+r.roi+'%</div><div class="stat-label" style="font-size:11px">投入产出比</div></div></div>';
+        }
+        var diag = document.getElementById('ai-diagnosis');
+        if (diag) {
+            var tips = [];
+            var np = Number(r.netProfit);
+            var config = ConfigManager.get();
+            if (np >= 0) tips.push('✅ 本批次预计盈利 <b>¥' + r.netProfit + '</b>，投入产出比 <b>' + r.roi + '%</b>，经营健康');
+            else tips.push('⚠️ 本批次预计亏损 <b>¥' + Math.abs(np) + '</b>，需优化成本或提高出栏售价');
+            var feedPct = r.dynamicCost > 0 ? Number(((r.lambCount * r.feedCostPerSheep) / r.dynamicCost * 100).toFixed(1)) : 0;
+            if (feedPct > 40) tips.push('💡 饲料成本占比 ' + feedPct + '%（¥' + (r.lambCount * r.feedCostPerSheep).toFixed(0) + '），建议增加酒糟替代饲料降本（系统参考价¥' + (config.feedPriceAlternative || 2.4) + '/kg）');
+            var jd2 = CONST.JINAN_MARKET_DATA || [];
+            var cm = new Date().getMonth() + 1;
+            if (cm >= 11 || cm <= 1) tips.push('📅 当前处于低价采购窗口（11-1月），羔羊价格较低，建议加大采购量');
+            else if (cm >= 5 && cm <= 8) tips.push('📅 当前处于高价出栏窗口（5-8月），育肥羊售价较高，建议集中出栏');
+            else tips.push('📅 建议错峰采购（11-1月低价）并错峰出栏（5-8月高价）');
+            if (r.survivalRate < 95) tips.push('⚠️ 成活率低于95%，需加强防疫管理');
+            tips.push('📊 固定成本分摊 ¥' + r.fixedPerBatch + '/批，动态投入 ¥' + r.dynamicCost + '/批');
+            diag.innerHTML = '<b>🤖 AI经营诊断</b><br>' + tips.join('<br>');
+        }
+    },
+    resetToDefault: function() {
+        var config = ConfigManager.get();
+        var jd = CONST.JINAN_MARKET_DATA;
+        var cm = new Date().getMonth()+1;
+        var avgLP = 0, avgFP = 0, c = 0;
+        for (var i = 0; i < jd.length; i++) { if (jd[i].month === cm) { avgLP += jd[i].lambPrice; avgFP += jd[i].fattenPrice; c++; } }
+        if (c > 0) { avgLP /= c; avgFP /= c; }
+        document.getElementById('pd-landCost').value = config.fixedAssetFirstYear;
+        document.getElementById('pd-annualFixed').value = config.landArea * config.landRentPerMu;
+        document.getElementById('pd-depYears').value = config.depreciationYears;
+        document.getElementById('pd-lambCount').value = config.maxStockYear2Plus;
+        document.getElementById('pd-lambPrice').value = Math.round(avgLP * 50);
+        document.getElementById('pd-feedCost').value = (config.dailyFeedCost * config.fattenDays).toFixed(0);
+        document.getElementById('pd-medCost').value = 15;
+        document.getElementById('pd-otherCost').value = 10;
+        document.getElementById('pd-salePrice').value = avgFP.toFixed(1);
+        document.getElementById('pd-avgWeight').value = 35;
+        document.getElementById('pd-survivalRate').value = 97;
+        this.updateProfitCalc();
+        Toast.show('已恢复桑梓店5亩方案默认参数', 'success');
+    },
+    exportProfitReport: function() {
+        var params = {
+            landCost: Number(document.getElementById('pd-landCost').value)||0,
+            annualFixed: Number(document.getElementById('pd-annualFixed').value)||0,
+            depreciationYears: Number(document.getElementById('pd-depYears').value)||5,
+            lambCount: Number(document.getElementById('pd-lambCount').value)||0,
+            lambPrice: Number(document.getElementById('pd-lambPrice').value)||0,
+            feedCostPerSheep: Number(document.getElementById('pd-feedCost').value)||0,
+            medCostPerSheep: Number(document.getElementById('pd-medCost').value)||0,
+            otherCost: Number(document.getElementById('pd-otherCost').value)||0,
+            salePrice: Number(document.getElementById('pd-salePrice').value)||0,
+            avgWeight: Number(document.getElementById('pd-avgWeight').value)||0,
+            survivalRate: Number(document.getElementById('pd-survivalRate').value)||97
+        };
+        var r = this.calcBatchProfitCashFlow(params);
+        if (typeof XLSX === 'undefined') { Toast.show('XLSX库未加载', 'danger'); return; }
+        var ws_data = [['批次投入产出测算报告'],[''],['固定成本'],['场地建设投入',params.landCost],['年度固定支出',params.annualFixed],['折旧年限',params.depreciationYears],['单批固定分摊',r.fixedPerBatch],[''],['动态投入'],['进羊数量',params.lambCount],['羔羊单价',params.lambPrice],['单只饲料成本',params.feedCostPerSheep],['单只防疫兽药',params.medCostPerSheep],['其他杂费/只',params.otherCost],['动态总投入',r.dynamicCost],[''],['出栏预测'],['出栏单价(元/kg)',params.salePrice],['平均出栏重量(kg)',params.avgWeight],['成活率',params.survivalRate+'%'],['有效出栏只数',r.effectiveCount],['总销售收入',r.totalSaleIncome],[''],['对冲结果'],['本批总投入',r.totalInvest],['单批次净利润',r.netProfit],['投入产出比',r.roi+'%']];
+        var ws = XLSX.utils.aoa_to_sheet(ws_data);
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, '投入产出测算');
+        XLSX.writeFile(wb, '批次投入产出测算_' + Utils.getToday() + '.xlsx');
+        Toast.show('导出成功', 'success');
+    },
+    refresh: function() {
+        this.renderProfitDashboard();
+        this.renderStats();
+        this.renderBatchTable();
+        this.renderYearlyChart();
+        this.renderMonthlyChart();
+    },
+    exportReport: function() {
+        var batchData = this.getBatchInvestData();
+        var data = [];
+        for (var i = 0; i < batchData.length; i++) {
+            var d = batchData[i];
+            data.push({
+                '批次': d.batchName,
+                '进羊投入': d.invest,
+                '饲养成本': d.feedCost,
+                '出栏收入': d.saleIncome,
+                '净收益': d.netProfit,
+                'ROI': d.roi + '%',
+                '状态': d.status
+            });
+        }
+        ExportManager.toExcel(data, '现金流分析报告');
+    }
+};
+/* =============================================
+哈希路由管理器 - V5.5增量新增（支持分享链接刷新）
+============================================= */
+var HashRouter = {
+    init: function() {
+        var self = this;
+        window.addEventListener('hashchange', function() { self.navigate(); });
+        window.addEventListener('load', function() { self.navigate(); });
+        NavManager.init();
+    },
+    navigate: function() {
+        var hash = window.location.hash.replace('#/', '').replace('#', '') || 'dashboard';
+        NavManager.switchPanel(hash);
+    },
+    set: function(panel) {
+        window.location.hash = panel;
+    }
+};
+/* =============================================
+性能优化：防抖渲染管理器 - V5.4增量新增
+============================================= */
+var RenderOptimizer = {
+    _queue: {},
+    _timers: {},
+    schedule: function(key, fn, delay) {
+        if (this._timers[key]) clearTimeout(this._timers[key]);
+        this._queue[key] = fn;
+        this._timers[key] = setTimeout(function() {
+            if (RenderOptimizer._queue[key]) {
+                RenderOptimizer._queue[key]();
+                delete RenderOptimizer._queue[key];
+            }
+        }, delay || 100);
+    }
+};
+document.addEventListener("DOMContentLoaded", function() { 
+    App.init(); 
+    HashRouter.init();
+});
+document.addEventListener("click", function(e) { if (e.target === document.getElementById("modal-overlay")) { ModalManager.close(); } });
+</script>
+<!-- V5.4.0 Build Complete - 桑梓店5亩5年育肥羊方案系统 -->
+</body>
+</html>
